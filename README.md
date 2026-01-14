@@ -1,8 +1,8 @@
 # lolve-cartography
 
-Codebase cartography and JSDoc annotation management tools.
+Codebase cartography and method indexing tools.
 
-Analyze your JavaScript codebase structure, generate method indexes, and manage JSDoc annotations with role-based taxonomy.
+Analyze your JavaScript codebase structure, generate method indexes with automatically inferred metadata (roles, effects, consumers).
 
 [Version francaise](./README.fr.md)
 
@@ -30,11 +30,11 @@ cd /path/to/your/project
 # Generate method index
 lolve-cartography annotate index
 
-# Audit missing annotations
-lolve-cartography annotate audit
+# Scan codebase and list methods with inferred metadata
+lolve-cartography annotate scan
 
-# Generate annotation suggestions
-lolve-cartography annotate suggest
+# Enrich cartography with roles, effects, consumers
+lolve-cartography annotate enrich
 
 # View statistics
 lolve-cartography annotate stats
@@ -222,7 +222,7 @@ lolve-cartography <command> [options]
 ### Shortcuts
 
 ```bash
-lc-annotate <subcommand>    # Annotation management
+lc-annotate <subcommand>    # Cartography management
 lc-index                     # Method index generation
 ```
 
@@ -230,10 +230,10 @@ lc-index                     # Method index generation
 
 | Command | Description |
 |---------|-------------|
-| `annotate audit` | List missing annotations |
-| `annotate suggest` | Generate annotation suggestions |
-| `annotate apply` | Generate Markdown report with annotations to copy |
-| `annotate stats` | Display annotation statistics |
+| `annotate scan` | Scan codebase, list methods with inferred metadata |
+| `annotate enrich` | Enrich cartography with roles, effects, consumers |
+| `annotate apply` | Generate Markdown report with enrichments |
+| `annotate stats` | Display cartography statistics |
 | `annotate index` | Generate/update method index |
 | `index` | Shortcut for `annotate index` |
 

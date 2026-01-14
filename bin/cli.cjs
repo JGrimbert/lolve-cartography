@@ -18,31 +18,32 @@
 const path = require('path');
 
 const args = process.argv.slice(2);
-const command = args[0];
 
-// Handle --project option
+// Handle --project option FIRST (before reading command)
 const projectIdx = args.indexOf('--project');
 if (projectIdx !== -1 && args[projectIdx + 1]) {
   process.env.LC_PROJECT_PATH = path.resolve(args[projectIdx + 1]);
   args.splice(projectIdx, 2);
 }
 
+const command = args[0];
+
 // Show help
 if (!command || command === '--help' || command === '-h') {
   console.log(`
-lolve-cartography - Codebase cartography and JSDoc annotation tools
+lolve-cartography - Codebase cartography and method indexing tools
 
 Usage:
   lolve-cartography <command> [options]
-  lc-annotate <subcommand>     # Shortcut for annotation commands
+  lc-annotate <subcommand>     # Shortcut for cartography commands
   lc-index                     # Shortcut for index generation
 
 Commands:
-  annotate <subcmd>   Annotation management
-    audit             List missing annotations
-    suggest           Generate suggestions
-    apply             Generate report
-    stats             Show statistics
+  annotate <subcmd>   Cartography management
+    scan              Scan codebase, list methods with inferred metadata
+    enrich            Enrich cartography with roles, effects, consumers
+    apply             Generate enrichment report
+    stats             Show cartography statistics
     index             Generate method index
 
   context             Run context analysis
@@ -55,8 +56,8 @@ Environment Variables:
   LC_PROJECT_PATH     Alternative to --project option
 
 Examples:
-  lolve-cartography annotate audit
-  lolve-cartography annotate suggest --file Vertex.js
+  lolve-cartography annotate scan
+  lolve-cartography annotate enrich --file Vertex.js
   lolve-cartography --project /path/to/myproject annotate stats
 `);
   process.exit(0);
