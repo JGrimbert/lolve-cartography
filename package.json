@@ -1,0 +1,48 @@
+{
+  "name": "lolve-cartography",
+  "version": "1.0.0",
+  "description": "Codebase cartography and JSDoc annotation management tools",
+  "main": "lib/index.cjs",
+  "bin": {
+    "lolve-cartography": "./bin/cli.cjs",
+    "lc-annotate": "./bin/annotate.cjs",
+    "lc-index": "./bin/index.cjs"
+  },
+  "scripts": {
+    "annotate": "node lib/annotation-manager.cjs",
+    "annotate:index": "node lib/annotation-manager.cjs index",
+    "annotate:audit": "node lib/annotation-manager.cjs audit",
+    "annotate:suggest": "node lib/annotation-manager.cjs suggest",
+    "annotate:apply": "node lib/annotation-manager.cjs apply",
+    "annotate:stats": "node lib/annotation-manager.cjs stats",
+    "context": "node lib/context-agent.cjs",
+    "context:benchmark": "node lib/context-benchmark.cjs",
+    "cartography": "node lib/generate-cartography.cjs",
+    "test": "node --test"
+  },
+  "keywords": [
+    "jsdoc",
+    "annotation",
+    "cartography",
+    "codebase",
+    "documentation",
+    "static-analysis"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "acorn": "^8.15.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "lib/",
+    "bin/",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}
