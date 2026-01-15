@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "lolve-context": {
+      "type": "stdio",
+      "command": "cmd",
+      "args": [
+        "/c",
+        "node",
+        "lib/mcp-server.cjs"
+      ],
+      "env": {}
+    }
+  }
+}
