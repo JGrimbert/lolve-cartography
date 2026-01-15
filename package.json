@@ -41,7 +41,7 @@
     "lib/",
     "bin/",
     "README.md",
-    ".mcp.json",
+    ".mcp.json"
   ],
   "repository": {
     "type": "git",
