@@ -16,6 +16,9 @@
  *   --dry-run     : génère le prompt sans appeler l'API
  */
 
+// Charger les variables d'environnement depuis .env
+require('./env-loader.cjs');
+
 const fs = require('fs');
 const path = require('path');
 const { log, section, COLORS } = require('./utils/logger.cjs');

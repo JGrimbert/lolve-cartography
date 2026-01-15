@@ -10,6 +10,8 @@ Analyze your JavaScript codebase structure, generate method indexes with automat
 
 ```bash
 npm install lolve-cartography
+node lib/init-project.cjs
+node install.cjs
 ```
 
 Or clone and link locally:

@@ -24,3 +24,6 @@ coverage/
 
 # Build output
 dist/
+
+# API Keys
+.env
