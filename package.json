@@ -40,7 +40,8 @@
   "files": [
     "lib/",
     "bin/",
-    "README.md"
+    "README.md",
+    ".mcp.json",
   ],
   "repository": {
     "type": "git",
