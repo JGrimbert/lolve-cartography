@@ -6,7 +6,8 @@
   "bin": {
     "lolve-cartography": "./bin/cli.cjs",
     "lc-annotate": "./bin/annotate.cjs",
-    "lc-index": "./bin/index.cjs"
+    "lc-index": "./bin/index.cjs",
+    "lc-setup-hooks": "./lib/setup-claude-hooks.cjs"
   },
   "scripts": {
     "annotate": "node lib/annotation-manager.cjs",
@@ -32,13 +33,15 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.2",
-    "acorn": "^8.15.0"
+    "acorn": "^8.15.0",
+    "chokidar": "^5.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "files": [
     "lib/",
+    "lib/hooks/",
     "bin/",
     "README.md",
     ".mcp.json"
