@@ -14,28 +14,24 @@ npm install -g github:JGrimbert/lolve-cartography
 
 ## Commandes CLI
 
-### Génération de l'index
+### Index complet (RECOMMANDÉ)
 ```bash
-# Dans le projet courant
-npx lolve-cartography annotate index
+# Dans le projet courant - génère l'index avec roles, effects et consumers
+npx lolve-cartography annotate full
+
+# Forcer la ré-indexation complète
+npx lolve-cartography annotate full --force
 
 # Sur un projet spécifique
-npx lolve-cartography --project /path/to/project annotate index
+npx lolve-cartography --project /path/to/project annotate full
 ```
 
-### Scanner la codebase
+### Commandes individuelles
 ```bash
-npx lolve-cartography annotate scan
-```
-
-### Enrichir avec métadonnées
-```bash
-npx lolve-cartography annotate enrich
-```
-
-### Voir les statistiques
-```bash
-npx lolve-cartography annotate stats
+npx lolve-cartography annotate index     # Index avec roles uniquement
+npx lolve-cartography annotate enrich    # Analyser effects & consumers (fichier séparé)
+npx lolve-cartography annotate scan      # Aperçu des enrichissements possibles
+npx lolve-cartography annotate stats     # Voir les statistiques
 ```
 
 ## Utilisation avec Claude Code

@@ -7,20 +7,20 @@ lolve-cartography est un outil d'analyse et d'indexation de codebase JavaScript.
 ## Commands
 
 ```bash
-# Générer/mettre à jour l'index des méthodes
-node bin/cli.cjs annotate index
+# RECOMMANDÉ: Index complet (index + enrich + merge)
+node bin/cli.cjs annotate full
 
-# Scanner la codebase
-node bin/cli.cjs annotate scan
+# Forcer la ré-indexation complète
+node bin/cli.cjs annotate full --force
 
-# Enrichir avec métadonnées inférées
-node bin/cli.cjs annotate enrich
-
-# Statistiques
-node bin/cli.cjs annotate stats
+# Commandes individuelles:
+node bin/cli.cjs annotate index    # Index avec rôles uniquement
+node bin/cli.cjs annotate enrich   # Analyser effets & consumers
+node bin/cli.cjs annotate scan     # Aperçu des enrichissements
+node bin/cli.cjs annotate stats    # Statistiques
 
 # Tester sur un projet externe
-node bin/cli.cjs --project /path/to/project annotate index
+node bin/cli.cjs --project /path/to/project annotate full
 ```
 
 ## Architecture

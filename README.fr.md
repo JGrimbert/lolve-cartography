@@ -27,17 +27,17 @@ npm link
 # Naviguer vers votre projet
 cd /path/to/your/project
 
-# Generer l'index des methodes
-lolve-cartography annotate index
+# Index complet (RECOMMANDE) : index + enrichissement + fusion
+lolve-cartography annotate full
 
-# Auditer les annotations manquantes
-lolve-cartography annotate audit
+# Ou etape par etape :
+lolve-cartography annotate index     # Generer l'index avec roles
+lolve-cartography annotate enrich    # Analyser effets & consumers
+lolve-cartography annotate scan      # Apercu des enrichissements possibles
+lolve-cartography annotate stats     # Voir les statistiques
 
-# Generer des suggestions d'annotations
-lolve-cartography annotate suggest
-
-# Voir les statistiques
-lolve-cartography annotate stats
+# Forcer la re-indexation complete
+lolve-cartography annotate full --force
 ```
 
 ## Vue d'ensemble de l'architecture
@@ -230,12 +230,12 @@ lc-index                      # Generation de l'index
 
 | Commande | Description |
 |----------|-------------|
-| `annotate audit` | Liste les annotations manquantes |
-| `annotate suggest` | Genere des suggestions d'annotations |
-| `annotate apply` | Genere un rapport Markdown avec les annotations a copier |
-| `annotate stats` | Affiche les statistiques d'annotations |
-| `annotate index` | Genere/met a jour l'index des methodes |
-| `index` | Raccourci pour `annotate index` |
+| `annotate full` | **RECOMMANDE** - Pipeline complet : index + enrichissement + fusion |
+| `annotate index` | Generer/mettre a jour l'index (roles uniquement) |
+| `annotate enrich` | Analyser effets, consumers (fichier separe) |
+| `annotate scan` | Apercu des methodes et enrichissements possibles |
+| `annotate apply` | Generer un rapport Markdown avec les enrichissements |
+| `annotate stats` | Afficher les statistiques de cartographie |
 
 ### Options
 
