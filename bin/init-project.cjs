@@ -351,18 +351,18 @@ async function main() {
   const config = generateConfig(projectName, analysis);
   
   // Sauvegarder dans .lolve-cartography.json à la racine
-  const configPath = path.join(projectRoot, '.lolve-cartography.json');
-
-  // Backup si existe déjà
-  if (fs.existsSync(configPath)) {
-    const backupPath = configPath + '.backup';
-    fs.copyFileSync(configPath, backupPath);
-    log(`Backup créé: .lolve-cartography.json.backup`, 'warning');
-  }
+  const configPath = path.join(projectRoot, '.cache/lolve-cartography.json');
 
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
   log(`Configuration générée: ${configPath}`, 'success');
-  
+
+  require('./setup-claude-hooks.cjs');
+
+  process.argv = ['node', 'annotation-manager.cjs', 'full', '--force'];
+  require('../lib/annotation-manager.cjs');
+
+  //process.argv = ['node', 'bin/setup-claude-hooks.cjs'];
+
   // Afficher les prochaines étapes
   header('Configuration terminée !');
   

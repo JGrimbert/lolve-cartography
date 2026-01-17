@@ -10,5 +10,27 @@
       ],
       "env": {}
     }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node node_modules/lolve-cartography/lib/hooks/pre-read-hook.cjs"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node node_modules/lolve-cartography/lib/hooks/pre-edit-hook.cjs"
+          }
+        ]
+      }
+    ]
   }
 }
