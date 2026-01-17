@@ -7,19 +7,15 @@
     "lolve-cartography": "./bin/cli.cjs",
     "lc-annotate": "./bin/annotate.cjs",
     "lc-index": "./bin/index.cjs",
-    "lc-setup-hooks": "./lib/setup-claude-hooks.cjs"
+    "lc-setup-hooks": "./lib/setup-claude-hooks.cjs",
   },
   "scripts": {
     "annotate": "node lib/annotation-manager.cjs",
-    "annotate:index": "node lib/annotation-manager.cjs index",
-    "annotate:audit": "node lib/annotation-manager.cjs audit",
-    "annotate:suggest": "node lib/annotation-manager.cjs suggest",
-    "annotate:apply": "node lib/annotation-manager.cjs apply",
-    "annotate:stats": "node lib/annotation-manager.cjs stats",
     "context": "node lib/context-agent.cjs",
     "context:benchmark": "node lib/context-benchmark.cjs",
-    "cartography": "node lib/generate-cartography.cjs",
-    "test": "node --test"
+    "test": "node --test",
+    "test:mcp": "mcp-inspector ./lib/mcp/lolvemcp.js",
+    "extract": "node lib/mcp/extract-cli.js"
   },
   "keywords": [
     "jsdoc",

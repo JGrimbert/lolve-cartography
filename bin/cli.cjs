@@ -65,6 +65,11 @@ Examples:
 
 // Route to appropriate module
 switch (command) {
+  case 'init-project':
+    process.argv = ['node', 'bin/init-project.cjs'];
+    require('../bin/init-project.cjs');
+    break;
+
   case 'annotate':
     // Pass remaining args to annotation-manager
     process.argv = ['node', 'annotation-manager.cjs', ...args.slice(1)];

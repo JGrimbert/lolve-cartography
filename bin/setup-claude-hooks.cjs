@@ -31,7 +31,7 @@ function log(message, type = 'info') {
 function main() {
   const projectRoot = process.cwd();
   const claudeDir = path.join(projectRoot, '.claude');
-  const settingsPath = path.join(claudeDir, 'settings.local.json');
+  const settingsPath = path.join(projectRoot, '.mcp.json');
 
   console.log(`\n${COLORS.bright}${COLORS.cyan}Configuration des hooks Claude Code${COLORS.reset}\n`);
 

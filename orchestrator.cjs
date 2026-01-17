@@ -74,24 +74,24 @@ class Orchestrator {
     log('Orchestrator', 'Agents initialisés', 'success');
 
     // Vérifier l'API (sauf en dry-run)
-    if (!this.options.dryRun) {
-      if (!this.aiClient.isAvailable()) {
-        throw new Error(`
-❌ API Anthropic requise !
-
-Votre système d'optimisation par méthode nécessite l'API directe.
-
-Solution: Définissez ANTHROPIC_API_KEY dans un fichier .env à la racine du projet:
-  ANTHROPIC_API_KEY=sk-ant-votre-clé-ici
-
-Pour obtenir une clé API: https://console.anthropic.com
-
-Note: L'optimisation par méthode réduit la consommation de tokens de ~95%,
-      rendant l'utilisation de l'API très économique.
-        `);
-      }
-      log('Orchestrator', '✓ API Anthropic disponible', 'success');
-    }
+//     if (!this.options.dryRun) {
+//       if (!this.aiClient.isAvailable()) {
+//         throw new Error(`
+// ❌ API Anthropic requise !
+//
+// Votre système d'optimisation par méthode nécessite l'API directe.
+//
+// Solution: Définissez ANTHROPIC_API_KEY dans un fichier .env à la racine du projet:
+//   ANTHROPIC_API_KEY=sk-ant-votre-clé-ici
+//
+// Pour obtenir une clé API: https://console.anthropic.com
+//
+// Note: L'optimisation par méthode réduit la consommation de tokens de ~95%,
+//       rendant l'utilisation de l'API très économique.
+//         `);
+//       }
+//       log('Orchestrator', '✓ API Anthropic disponible', 'success');
+//     }
 
     return this;
   }
@@ -102,18 +102,18 @@ Note: L'optimisation par méthode réduit la consommation de tokens de ~95%,
   async run(query) {
     try {
       // 1. Vérifier le cache
-      if (this.config.agents.cache.enabled) {
-        const cached = this.agents.cache.find(query);
-        if (cached.hit) {
-          log('Orchestrator', `Question similaire trouvée en cache (${(cached.similarity * 100).toFixed(0)}%)`, 'success');
-          console.log(`\n${COLORS.dim}Réponse précédente:${COLORS.reset}`);
-          console.log(cached.entry.response.substring(0, 500) + '...\n');
-          
-          // Demander si on continue quand même
-          console.log('Voulez-vous continuer avec une nouvelle analyse ? [o/N]');
-          // Pour l'instant on continue automatiquement
-        }
-      }
+      // if (this.config.agents.cache.enabled) {
+      //   const cached = this.agents.cache.find(query);
+      //   if (cached.hit) {
+      //     log('Orchestrator', `Question similaire trouvée en cache (${(cached.similarity * 100).toFixed(0)}%)`, 'success');
+      //     console.log(`\n${COLORS.dim}Réponse précédente:${COLORS.reset}`);
+      //     console.log(cached.entry.response.substring(0, 500) + '...\n');
+      //
+      //     // Demander si on continue quand même
+      //     console.log('Voulez-vous continuer avec une nouvelle analyse ? [o/N]');
+      //     // Pour l'instant on continue automatiquement
+      //   }
+      // }
 
       // 2. Prétraitement de la requête
       const preprocessed = this.agents.preprocess.process(query);
