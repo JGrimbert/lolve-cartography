@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-01-16T07:00:05.214Z",
+  "methods": {
+    "ContextAgent.createSearchSession": {
+      "code": "  // ==========================================================================\r\n  // SEARCH SESSION\r\n  // ==========================================================================\r\n\r\n  /**\r\n   * Create a new search session\r\n   * @param {string} query - Initial query\r\n   * @param {Object} options - Search options\r\n   * @returns {SearchSession} New session\r\n   */\r\n  createSearchSession(query, options = {}) {\r\n    return new SearchSession(this, query, options);\r\n  }",
+      "normalized": "// ========================================================================== // SEARCH SESSION // ========================================================================== /** * Create a new search session * @param { string } query - Initial query * @param { Object } options - Search options * @returns { SearchSession } New session */ createSearchSession(query, options = { }){ return new SearchSession(this, query, options);}",
+      "file": "lib\\context-agent.cjs",
+      "class": "ContextAgent",
+      "name": "createSearchSession",
+      "line": 348,
+      "endLine": 350,
+      "score": 5
+    }
+  },
+  "files": {
+    "lib\\context-agent.cjs": {
+      "path": "C:\\lolve-cartography\\lib\\context-agent.cjs",
+      "methods": [
+        "ContextAgent.createSearchSession"
+      ],
+      "originalHash": "2692d988d664bf2dce29ec6436e23c24"
+    }
+  },
+  "hashes": {}
+}
