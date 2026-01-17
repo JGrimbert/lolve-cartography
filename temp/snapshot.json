@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-17T08:34:17.270Z",
+  "timestamp": "2026-01-17T11:14:34.194Z",
   "methods": {
     "MethodSearch.findRelevantMethods": {
       "code": "  /**\r\n   * Trouve les méthodes pertinentes pour une requête\r\n   * @param {string} query - Requête utilisateur\r\n   * @param {Object} options - Options de recherche\r\n   * @returns {Array} Liste des méthodes avec leur score\r\n   */\r\n  findRelevantMethods(query, options = {}) {\r\n    const {\r\n      maxMethods = 10,\r\n      minScore = 3,\r\n      roles = null,\r\n      excludeRoles = ['internal'],\r\n      includePrivate = false,\r\n      _isRetry = false  // Internal flag for retry\r\n    } = options;\r\n\r\n    log('MethodSearch', `Searching methods for: \"${query.substring(0, 50)}...\"${_isRetry ? ' (extended scope)' : ''}`);\r\n\r\n    const results = this._doSearch(query, { maxMethods, minScore, roles, excludeRoles, includePrivate });\r\n\r\n    // If no results and not already retrying, try with extended scope\r\n    if (results.length === 0 && !_isRetry) {\r\n      log('MethodSearch', 'No results, retrying with extended scope (including internal/private)...');\r\n      return this._doSearch(query, {\r\n        maxMethods,\r\n        minScore: Math.max(1, minScore - 2),  // Lower threshold too\r\n        roles: null,\r\n        excludeRoles: [],  // Include internal\r\n        includePrivate: true,\r\n        _isRetry: true\r\n      });\r\n    }\r\n\r\n    return results;\r\n  }",
@@ -9,17 +9,7 @@
       "name": "findRelevantMethods",
       "line": 28,
       "endLine": 56,
-      "score": 0
-    },
-    "SearchSession.getMethodsNeedingAnnotation": {
-      "code": "  /**\r\n   * Identifie les méthodes nécessitant une annotation LLM\r\n   * Retourne les méthodes à annoter avec leur code (pour envoi au LLM)\r\n   *\r\n   * @param {Object} options - Options\r\n   * @returns {Object} { needsAnnotation: [...], alreadyComplete: number, tokensEstimate: number }\r\n   */\r\n  getMethodsNeedingAnnotation(options = {}) {\r\n    const {\r\n      includeOutdated = true,\r\n      includePartial = false,\r\n      maxMethods = 5\r\n    } = options;\r\n\r\n    const status = this.checkAnnotations();\r\n\r\n    const toAnnotate = [\r\n      ...status.missing,\r\n      ...(includeOutdated ? status.outdated : []),\r\n      ...(includePartial ? status.partial : [])\r\n    ].slice(0, maxMethods);\r\n\r\n    const methodsWithCode = toAnnotate.map(key => {\r\n      const method = this.agent.methodIndexer.index.methods[key];\r\n      const code = this.agent.methodIndexer.extractMethodCode(key);\r\n\r\n      return {\r\n        key,\r\n        file: method?.file,\r\n        class: method?.class,\r\n        name: method?.name,\r\n        signature: method?.signature,\r\n        currentRole: method?.role,\r\n        currentDescription: method?.description,\r\n        code,\r\n        codeLength: code?.length || 0\r\n      };\r\n    }).filter(m => m.code);\r\n\r\n    const totalChars = methodsWithCode.reduce((sum, m) => sum + m.codeLength, 0);\r\n    const tokensEstimate = Math.ceil(totalChars / 4);\r\n\r\n    this._addHistory('getMethodsNeedingAnnotation', {\r\n      requested: toAnnotate.length,\r\n      withCode: methodsWithCode.length,\r\n      tokensEstimate\r\n    });\r\n\r\n    return {\r\n      needsAnnotation: methodsWithCode,\r\n      alreadyComplete: status.complete.length,\r\n      tokensEstimate\r\n    };\r\n  }",
-      "normalized": "/** * Identifie les méthodes nécessitant une annotation LLM * Retourne les méthodes à annoter avec leur code(pour envoi au LLM)* * @param { Object } options - Options * @returns { Object } { needsAnnotation: [...], alreadyComplete: number, tokensEstimate: number } */ getMethodsNeedingAnnotation(options = { }){ const { includeOutdated = true, includePartial = false, maxMethods = 5 } = options;const status = this.checkAnnotations();const toAnnotate = [ ...status.missing, ...(includeOutdated ? status.outdated : []), ...(includePartial ? status.partial : [])].slice(0, maxMethods);const methodsWithCode = toAnnotate.map(key => { const method = this.agent.methodIndexer.index.methods[key];const code = this.agent.methodIndexer.extractMethodCode(key);return { key, file: method?.file, class: method?.class, name: method?.name, signature: method?.signature, currentRole: method?.role, currentDescription: method?.description, code, codeLength: code?.length || 0 };}).filter(m => m.code);const totalChars = methodsWithCode.reduce((sum, m)=> sum + m.codeLength, 0);const tokensEstimate = Math.ceil(totalChars / 4);this._addHistory('getMethodsNeedingAnnotation', { requested: toAnnotate.length, withCode: methodsWithCode.length, tokensEstimate });return { needsAnnotation: methodsWithCode, alreadyComplete: status.complete.length, tokensEstimate };}",
-      "file": "lib\\context\\search-session.cjs",
-      "class": "SearchSession",
-      "name": "getMethodsNeedingAnnotation",
-      "line": 544,
-      "endLine": 590,
-      "score": 0
+      "score": 6
     },
     "ExperienceMemory.findSimilar": {
       "code": "  /**\r\n   * Recherche les expériences similaires\r\n   */\r\n  findSimilar(fingerprint, options = {}) {\r\n    const { limit = 5, minSimilarity = 0.3, excludePending = true } = options;\r\n\r\n    const queryTerms = this.fingerprintToTerms(fingerprint);\r\n    const queryEmbedding = this.tfidf.embed(queryTerms);\r\n\r\n    if (queryEmbedding.length === 0) {\r\n      return [];\r\n    }\r\n\r\n    const results = [];\r\n\r\n    for (const event of this.events) {\r\n      if (excludePending && event.outcome.status === 'pending') {\r\n        continue;\r\n      }\r\n\r\n      const similarity = this.tfidf.cosineSimilarity(queryEmbedding, event.embedding);\r\n\r\n      if (similarity >= minSimilarity) {\r\n        results.push({\r\n          event,\r\n          similarity\r\n        });\r\n      }\r\n    }\r\n\r\n    // Trier par similarité décroissante\r\n    results.sort((a, b) => b.similarity - a.similarity);\r\n\r\n    return results.slice(0, limit);\r\n  }",
@@ -29,77 +19,7 @@
       "name": "findSimilar",
       "line": 386,
       "endLine": 417,
-      "score": 0
-    },
-    "Orchestrator.init": {
-      "code": "  /**\n   * Initialise l'orchestrator et les agents nécessaires\n   */\n  async init() {\n    section('LOLVE Agent System - API Mode');\n\n    // Charger la configuration\n    this.config = readJSON(this.configPath);\n    if (!this.config) {\n      throw new Error('Configuration non trouvée: agents.config.json');\n    }\n\n    log('Orchestrator', 'Initialisation des agents...');\n\n    // Initialiser les agents\n    this.agents = {\n      context: await new ContextAgent(this.config).init(),\n      cache: await new CacheAgent(this.config).init(),\n      preprocess: await new PreprocessAgent(this.config).init(),\n      analysis: await new AnalysisAgent(this.config).init(),\n      proposal: await new ProposalAgent(this.config).init()\n    };\n\n    // Initialiser le système d'apprentissage\n    this.experienceMemory = await new ExperienceMemory(this.config).init();\n    this.fingerprintGenerator = new FingerprintGenerator(this.config);\n    this.riskEngine = new RiskInferenceEngine(this.experienceMemory);\n\n    // Initialiser le client API\n    this.aiClient = new AIClient();\n\n    log('Orchestrator', 'Agents initialisés', 'success');\n    log('Orchestrator', `Mémoire d'expérience: ${this.experienceMemory.getStats().totalEvents} événements`, 'info');\n\n    // Vérifier l'API (sauf en dry-run)\n    if (!this.options.dryRun) {\n      if (!this.aiClient.isAvailable()) {\n        throw new Error(`\n❌ API Anthropic requise !\n\nVotre système d'optimisation par méthode nécessite l'API directe.\n\nSolution: Définissez ANTHROPIC_API_KEY dans un fichier .env à la racine du projet:\n  ANTHROPIC_API_KEY=sk-ant-votre-clé-ici\n\nPour obtenir une clé API: https://console.anthropic.com\n\nNote: L'optimisation par méthode réduit la consommation de tokens de ~95%,\n      rendant l'utilisation de l'API très économique.\n        `);\n      }\n      log('Orchestrator', '✓ API Anthropic disponible', 'success');\n    }\n\n    return this;\n  }",
-      "normalized": "/** * Initialise l'orchestrator et les agents nécessaires */ async init(){ section('LOLVE Agent System - API Mode');// Charger la configuration this.config = readJSON(this.configPath);if(!this.config){ throw new Error('Configuration non trouvée: agents.config.json');} log('Orchestrator', 'Initialisation des agents...');// Initialiser les agents this.agents = { context: await new ContextAgent(this.config).init(), cache: await new CacheAgent(this.config).init(), preprocess: await new PreprocessAgent(this.config).init(), analysis: await new AnalysisAgent(this.config).init(), proposal: await new ProposalAgent(this.config).init()};// Initialiser le système d'apprentissage this.experienceMemory = await new ExperienceMemory(this.config).init();this.fingerprintGenerator = new FingerprintGenerator(this.config);this.riskEngine = new RiskInferenceEngine(this.experienceMemory);// Initialiser le client API this.aiClient = new AIClient();log('Orchestrator', 'Agents initialisés', 'success');log('Orchestrator', `Mémoire d'expérience: $ { this.experienceMemory.getStats().totalEvents } événements`, 'info');// Vérifier l'API(sauf en dry-run)if(!this.options.dryRun){ if(!this.aiClient.isAvailable()){ throw new Error(` ❌ API Anthropic requise ! Votre système d'optimisation par méthode nécessite l'API directe. Solution: Définissez ANTHROPIC_API_KEY dans un fichier .env à la racine du projet: ANTHROPIC_API_KEY=sk-ant-votre-clé-ici Pour obtenir une clé API: https://console.anthropic.com Note: L'optimisation par méthode réduit la consommation de tokens de ~95%, rendant l'utilisation de l'API très économique. `);} log('Orchestrator', '✓ API Anthropic disponible', 'success');} return this;}",
-      "file": "lib\\orchestrator.cjs",
-      "class": "Orchestrator",
-      "name": "init",
-      "line": 55,
-      "endLine": 107,
-      "score": 0
-    },
-    "Orchestrator.buildOptimizedPrompt": {
-      "code": "  /**\n   * Construit le prompt optimisé avec méthodes extraites\n   */\n  buildOptimizedPrompt(originalQuery, preprocessed, analysis, proposal, methodsWithCode, context) {\n    const parts = [];\n\n    // En-tête contexte\n    parts.push(`# Contexte LOLVE`);\n    parts.push(`Catégorie détectée: ${context.detectedCategory || 'général'}`);\n\n    if (preprocessed.detectedTerms.length > 0) {\n      parts.push(`Termes domain: ${preprocessed.detectedTerms.map(t => t.term).join(', ')}`);\n    }\n\n    // Méthodes pertinentes avec leur code\n    if (methodsWithCode.length > 0) {\n      parts.push(`\\n# Méthodes pertinentes\\n`);\n      parts.push(`${methodsWithCode.length} méthode(s) sélectionnée(s) par analyse sémantique:\\n`);\n      \n      for (const method of methodsWithCode) {\n        parts.push(`## ${method.key}`);\n        parts.push(`Fichier: ${method.file}`);\n        parts.push(`Rôle: ${method.role || 'non spécifié'}`);\n        \n        if (method.description) {\n          parts.push(`Description: ${method.description}`);\n        }\n        \n        if (method.effects && Object.keys(method.effects).length > 0) {\n          parts.push(`Effets: ${Object.entries(method.effects).map(([k, v]) => `${k}: ${v.join(', ')}`).join('; ')}`);\n        }\n        \n        if (method.consumers && method.consumers.length > 0) {\n          parts.push(`Appelée par: ${method.consumers.join(', ')}`);\n        }\n        \n        parts.push(`\\n\\`\\`\\`javascript`);\n        parts.push(`// ${method.signature}`);\n        parts.push(method.code);\n        parts.push(`\\`\\`\\`\\n`);\n      }\n    }\n\n    // Expérience passée (warnings et recommandations)\n    if (context.experienceContext) {\n      const exp = context.experienceContext;\n\n      if (exp.warnings?.length > 0 || exp.blockedApproaches?.length > 0) {\n        parts.push(`\\n# Leçons de l'expérience passée`);\n        parts.push(`Niveau de risque: ${exp.riskLevel?.toUpperCase() || 'N/A'}`);\n\n        if (exp.warnings?.length > 0) {\n          parts.push(`\\nAvertissements:`);\n          for (const w of exp.warnings) {\n            parts.push(`- ${w.message}`);\n            if (w.lesson) parts.push(`  Leçon: ${w.lesson}`);\n          }\n        }\n\n        if (exp.blockedApproaches?.length > 0) {\n          parts.push(`\\nApproches à éviter:`);\n          for (const b of exp.blockedApproaches) {\n            parts.push(`- ${b.approach}: ${b.reason || 'échec précédent'}`);\n          }\n        }\n      }\n\n      if (exp.recommendations?.length > 0) {\n        parts.push(`\\nRecommandations:`);\n        for (const r of exp.recommendations) {\n          parts.push(`- ${r.message}`);\n        }\n      }\n    }\n\n    // Analyse\n    parts.push(`\\n# Analyse`);\n    parts.push(`- Type: ${analysis.summary.type}`);\n    parts.push(`- Complexité: ${analysis.complexity.label}`);\n\n    if (analysis.risks.length > 0) {\n      parts.push(`- Risques: ${analysis.risks.map(r => r.description).join(', ')}`);\n    }\n\n    // Approche choisie\n    if (proposal) {\n      parts.push(`\\n# Approche choisie`);\n      parts.push(`**${proposal.title}**`);\n      parts.push(proposal.description);\n      if (proposal.snippet) {\n        parts.push(`\\nExemple:\\n\\`\\`\\`javascript\\n${proposal.snippet}\\n\\`\\`\\``);\n      }\n    }\n\n    // Requête\n    parts.push(`\\n# Requête`);\n    parts.push(originalQuery);\n\n    return parts.join('\\n');\n  }",
-      "normalized": "/** * Construit le prompt optimisé avec méthodes extraites */ buildOptimizedPrompt(originalQuery, preprocessed, analysis, proposal, methodsWithCode, context){ const parts = [];// En-tête contexte parts.push(`# Contexte LOLVE`);parts.push(`Catégorie détectée: $ { context.detectedCategory || 'général' } `);if(preprocessed.detectedTerms.length > 0){ parts.push(`Termes domain: $ { preprocessed.detectedTerms.map(t => t.term).join(', ')} `);} // Méthodes pertinentes avec leur code if(methodsWithCode.length > 0){ parts.push(`\\n# Méthodes pertinentes\\n`);parts.push(`$ { methodsWithCode.length } méthode(s)sélectionnée(s)par analyse sémantique:\\n`);for(const method of methodsWithCode){ parts.push(`## $ { method.key } `);parts.push(`Fichier: $ { method.file } `);parts.push(`Rôle: $ { method.role || 'non spécifié' } `);if(method.description){ parts.push(`Description: $ { method.description } `);} if(method.effects && Object.keys(method.effects).length > 0){ parts.push(`Effets: $ { Object.entries(method.effects).map(([k, v])=> `$ { k } : $ { v.join(', ')} `).join(';')} `);} if(method.consumers && method.consumers.length > 0){ parts.push(`Appelée par: $ { method.consumers.join(', ')} `);} parts.push(`\\n\\`\\`\\`javascript`);parts.push(`// $ { method.signature } `);parts.push(method.code);parts.push(`\\`\\`\\`\\n`);}  } // Expérience passée(warnings et recommandations)if(context.experienceContext){ const exp = context.experienceContext;if(exp.warnings?.length > 0 || exp.blockedApproaches?.length > 0){ parts.push(`\\n# Leçons de l'expérience passée`);parts.push(`Niveau de risque: $ { exp.riskLevel?.toUpperCase()|| 'N/A' } `);if(exp.warnings?.length > 0){ parts.push(`\\nAvertissements:`);for(const w of exp.warnings){ parts.push(`- $ { w.message } `);if(w.lesson)parts.push(` Leçon: $ { w.lesson } `);}  } if(exp.blockedApproaches?.length > 0){ parts.push(`\\nApproches à éviter:`);for(const b of exp.blockedApproaches){ parts.push(`- $ { b.approach } : $ { b.reason || 'échec précédent' } `);}  }  } if(exp.recommendations?.length > 0){ parts.push(`\\nRecommandations:`);for(const r of exp.recommendations){ parts.push(`- $ { r.message } `);}  }  } // Analyse parts.push(`\\n# Analyse`);parts.push(`- Type: $ { analysis.summary.type } `);parts.push(`- Complexité: $ { analysis.complexity.label } `);if(analysis.risks.length > 0){ parts.push(`- Risques: $ { analysis.risks.map(r => r.description).join(', ')} `);} // Approche choisie if(proposal){ parts.push(`\\n# Approche choisie`);parts.push(`**$ { proposal.title } **`);parts.push(proposal.description);if(proposal.snippet){ parts.push(`\\nExemple:\\n\\`\\`\\`javascript\\n$ { proposal.snippet } \\n\\`\\`\\``);}  } // Requête parts.push(`\\n# Requête`);parts.push(originalQuery);return parts.join('\\n');}",
-      "file": "lib\\orchestrator.cjs",
-      "class": "Orchestrator",
-      "name": "buildOptimizedPrompt",
-      "line": 342,
-      "endLine": 438,
-      "score": 0
-    },
-    "AIClient.getStats": {
-      "code": "  /**\n   * Obtient les statistiques d'utilisation\n   * @returns {Object} Statistiques\n   */\n  getStats() {\n    const totalTokens = this.stats.totalInputTokens + this.stats.totalOutputTokens;\n    \n    // Coût estimé (Sonnet 4: $3/1M input, $15/1M output)\n    const inputCost = (this.stats.totalInputTokens / 1000000) * 3;\n    const outputCost = (this.stats.totalOutputTokens / 1000000) * 15;\n    const totalCost = inputCost + outputCost;\n\n    return {\n      ...this.stats,\n      totalTokens,\n      estimatedCost: {\n        input: inputCost.toFixed(4),\n        output: outputCost.toFixed(4),\n        total: totalCost.toFixed(4),\n        currency: 'USD'\n      }\n    };\n  }",
-      "normalized": "/** * Obtient les statistiques d'utilisation * @returns { Object } Statistiques */ getStats(){ const totalTokens = this.stats.totalInputTokens + this.stats.totalOutputTokens;// Coût estimé(Sonnet 4: $3/1M input, $15/1M output)const inputCost =(this.stats.totalInputTokens / 1000000)* 3;const outputCost =(this.stats.totalOutputTokens / 1000000)* 15;const totalCost = inputCost + outputCost;return { ...this.stats, totalTokens, estimatedCost: { input: inputCost.toFixed(4), output: outputCost.toFixed(4), total: totalCost.toFixed(4), currency: 'USD' }  };}",
-      "file": "lib\\ai-client.cjs",
-      "class": "AIClient",
-      "name": "getStats",
-      "line": 231,
-      "endLine": 249,
-      "score": 0
-    },
-    "CacheAgent.find": {
-      "code": "  /**\n   * Cherche une entrée similaire dans le cache\n   */\n  find(query) {\n    log('CacheAgent', 'Recherche dans le cache...');\n\n    let bestMatch = null;\n    let bestScore = 0;\n\n    for (const entry of this.cache.entries) {\n      const score = this.similarity(query, entry.query);\n\n      if (score > bestScore && score >= this.similarityThreshold) {\n        bestScore = score;\n        bestMatch = entry;\n      }\n    }\n\n    if (bestMatch) {\n      this.cache.stats.hits++;\n      log('CacheAgent', `Cache HIT! Similarité: ${(bestScore * 100).toFixed(1)}%`, 'success');\n      return {\n        hit: true,\n        entry: bestMatch,\n        similarity: bestScore\n      };\n    }\n\n    this.cache.stats.misses++;\n    log('CacheAgent', 'Cache MISS');\n    return { hit: false };\n  }",
-      "normalized": "/** * Cherche une entrée similaire dans le cache */ find(query){ log('CacheAgent', 'Recherche dans le cache...');let bestMatch = null;let bestScore = 0;for(const entry of this.cache.entries){ const score = this.similarity(query, entry.query);if(score > bestScore && score >= this.similarityThreshold){ bestScore = score;bestMatch = entry;}  } if(bestMatch){ this.cache.stats.hits++;log('CacheAgent', `Cache HIT! Similarité: $ {(bestScore * 100).toFixed(1)} %`, 'success');return { hit: true, entry: bestMatch, similarity: bestScore };} this.cache.stats.misses++;log('CacheAgent', 'Cache MISS');return { hit: false };}",
-      "file": "lib\\cache-agent.cjs",
-      "class": "CacheAgent",
-      "name": "find",
-      "line": 99,
-      "endLine": 127,
-      "score": 0
-    },
-    "CacheAgent.getStats": {
-      "code": "  /**\n   * Obtient les statistiques du cache\n   */\n  getStats() {\n    const total = this.cache.stats.hits + this.cache.stats.misses;\n    const hitRate = total > 0 ? (this.cache.stats.hits / total * 100).toFixed(1) : 0;\n\n    return {\n      entries: this.cache.entries.length,\n      hits: this.cache.stats.hits,\n      misses: this.cache.stats.misses,\n      hitRate: `${hitRate}%`\n    };\n  }",
-      "normalized": "/** * Obtient les statistiques du cache */ getStats(){ const total = this.cache.stats.hits + this.cache.stats.misses;const hitRate = total > 0 ?(this.cache.stats.hits / total * 100).toFixed(1): 0;return { entries: this.cache.entries.length, hits: this.cache.stats.hits, misses: this.cache.stats.misses, hitRate: `$ { hitRate } %` };}",
-      "file": "lib\\cache-agent.cjs",
-      "class": "CacheAgent",
-      "name": "getStats",
-      "line": 188,
-      "endLine": 198,
-      "score": 0
-    },
-    "CacheAgent.getExtendedStats": {
-      "code": "  /**\n   * Obtient les statistiques combinées cache + experience\n   * @param {ExperienceMemory} experienceMemory - Instance de ExperienceMemory\n   * @returns {Object} Statistiques combinées\n   */\n  getExtendedStats(experienceMemory) {\n    const cacheStats = this.getStats();\n    const experienceStats = experienceMemory ? experienceMemory.getStats() : null;\n\n    return {\n      cache: cacheStats,\n      experience: experienceStats,\n      combined: {\n        totalInteractions: cacheStats.entries + (experienceStats?.totalEvents || 0),\n        cacheHitRate: cacheStats.hitRate,\n        taskSuccessRate: experienceStats?.successRate || 'N/A',\n        learningProgress: experienceStats?.vocabularySize || 0\n      }\n    };\n  }",
-      "normalized": "/** * Obtient les statistiques combinées cache + experience * @param { ExperienceMemory } experienceMemory - Instance de ExperienceMemory * @returns { Object } Statistiques combinées */ getExtendedStats(experienceMemory){ const cacheStats = this.getStats();const experienceStats = experienceMemory ? experienceMemory.getStats(): null;return { cache: cacheStats, experience: experienceStats, combined: { totalInteractions: cacheStats.entries +(experienceStats?.totalEvents || 0), cacheHitRate: cacheStats.hitRate, taskSuccessRate: experienceStats?.successRate || 'N/A', learningProgress: experienceStats?.vocabularySize || 0 }  };}",
-      "file": "lib\\cache-agent.cjs",
-      "class": "CacheAgent",
-      "name": "getExtendedStats",
-      "line": 253,
-      "endLine": 267,
-      "score": 0
-    },
-    "MethodSearch.getMethodsContent": {
-      "code": "  /**\r\n   * Extrait le code des méthodes sélectionnées\r\n   * @param {Array} methods - Liste des méthodes (depuis findRelevantMethods)\r\n   * @returns {Array} Liste avec le code de chaque méthode\r\n   */\r\n  getMethodsContent(methods) {\r\n    const contents = [];\r\n\r\n    for (const item of methods) {\r\n      const methodKey = typeof item === 'string' ? item : item.key;\r\n      const method = typeof item === 'string'\r\n        ? this.methodIndexer.index.methods[item]\r\n        : item.method;\r\n\r\n      if (!method) continue;\r\n\r\n      const code = this.methodIndexer.extractMethodCode(methodKey);\r\n\r\n      if (code) {\r\n        contents.push({\r\n          key: methodKey,\r\n          file: method.file,\r\n          class: method.class,\r\n          name: method.name,\r\n          signature: method.signature,\r\n          role: method.role,\r\n          description: method.description,\r\n          code\r\n        });\r\n      }\r\n    }\r\n\r\n    return contents;\r\n  }",
-      "normalized": "/** * Extrait le code des méthodes sélectionnées * @param { Array } methods - Liste des méthodes(depuis findRelevantMethods)* @returns { Array } Liste avec le code de chaque méthode */ getMethodsContent(methods){ const contents = [];for(const item of methods){ const methodKey = typeof item === 'string' ? item : item.key;const method = typeof item === 'string' ? this.methodIndexer.index.methods[item] : item.method;if(!method)continue;const code = this.methodIndexer.extractMethodCode(methodKey);if(code){ contents.push({ key: methodKey, file: method.file, class: method.class, name: method.name, signature: method.signature, role: method.role, description: method.description, code });}  } return contents;}",
-      "file": "lib\\context\\method-search.cjs",
-      "class": "MethodSearch",
-      "name": "getMethodsContent",
-      "line": 164,
-      "endLine": 192,
-      "score": 0
+      "score": 6
     },
     "SearchSession.getAllLoadedFiles": {
       "code": "  /**\r\n   * Récupère tous les fichiers chargés jusqu'ici\r\n   * @returns {Map} Chemin → contenu\r\n   */\r\n  getAllLoadedFiles() {\r\n    return new Map(this._loadedFiles);\r\n  }",
@@ -109,7 +29,7 @@
       "name": "getAllLoadedFiles",
       "line": 410,
       "endLine": 412,
-      "score": 0
+      "score": 3
     },
     "SearchSession.getAtLevel": {
       "code": "  // ==========================================================================\r\n  // Niveaux de détail progressifs\r\n  // ==========================================================================\r\n\r\n  /**\r\n   * Récupère les résultats avec un niveau de détail spécifique\r\n   * @param {number} level - Niveau de détail (0-4)\r\n   *   0: Clés uniquement\r\n   *   1: + descriptions\r\n   *   2: + signatures complètes\r\n   *   3: + code des méthodes\r\n   *   4: + fichiers complets\r\n   * @param {Object} options - Options supplémentaires\r\n   * @returns {Array|Object} Résultats au niveau demandé\r\n   */\r\n  getAtLevel(level = 1, options = {}) {\r\n    const { includeDescriptions = true } = options;\r\n\r\n    switch (level) {\r\n      case 0:\r\n        return this.keys;\r\n\r\n      case 1:\r\n        return this._results.map(({ key, method, score }) => {\r\n          const result = {\r\n            key,\r\n            class: method.class,\r\n            name: method.name,\r\n            role: method.role,\r\n            score\r\n          };\r\n          if (includeDescriptions && method.description) {\r\n            result.description = method.description;\r\n          }\r\n          return result;\r\n        });\r\n\r\n      case 2:\r\n        return this._results.map(({ key, method, score }) => {\r\n          const result = {\r\n            key,\r\n            file: method.file,\r\n            class: method.class,\r\n            signature: method.signature,\r\n            role: method.role,\r\n            effects: method.effects,\r\n            consumers: method.consumers,\r\n            score\r\n          };\r\n          if (includeDescriptions && method.description) {\r\n            result.description = method.description;\r\n          }\r\n          return result;\r\n        });\r\n\r\n      case 3:\r\n        return this._results.map(({ key, method, score }) => {\r\n          if (!this._loadedCode.has(key)) {\r\n            const code = this.agent.methodIndexer.extractMethodCode(key);\r\n            if (code) {\r\n              this._loadedCode.set(key, code);\r\n            }\r\n          }\r\n          const result = {\r\n            key,\r\n            file: method.file,\r\n            class: method.class,\r\n            signature: method.signature,\r\n            role: method.role,\r\n            code: this._loadedCode.get(key) || null,\r\n            score\r\n          };\r\n          if (includeDescriptions && method.description) {\r\n            result.description = method.description;\r\n          }\r\n          return result;\r\n        });\r\n\r\n      case 4:\r\n        const fileGroups = {};\r\n        for (const { key, method } of this._results) {\r\n          const file = method.file;\r\n          if (!fileGroups[file]) {\r\n            const loaded = this.loadFile(file);\r\n            fileGroups[file] = {\r\n              path: file,\r\n              content: loaded?.content || null,\r\n              methods: []\r\n            };\r\n          }\r\n          fileGroups[file].methods.push(key);\r\n        }\r\n        return Object.values(fileGroups);\r\n\r\n      default:\r\n        return this.getAtLevel(1);\r\n    }\r\n  }",
@@ -119,37 +39,7 @@
       "name": "getAtLevel",
       "line": 429,
       "endLine": 511,
-      "score": 0
-    },
-    "ContextAgent.findRelevantFiles": {
-      "code": "  /**\r\n   * Find relevant files for a query\r\n   */\r\n  findRelevantFiles(query, maxFiles = 10) {\r\n    log('ContextAgent', `Searching files for: \"${query.substring(0, 50)}...\"`);\r\n\r\n    const queryLower = query.toLowerCase();\r\n    const queryWords = queryLower.split(/\\s+/).filter(w => w.length > 2);\r\n\r\n    const scored = [];\r\n\r\n    for (const [filePath, info] of Object.entries(this.index.files)) {\r\n      let score = 0;\r\n\r\n      // Score based on keywords\r\n      for (const word of queryWords) {\r\n        if (info.keywords.some(k => k.includes(word) || word.includes(k))) {\r\n          score += 3;\r\n        }\r\n        if (info.name.toLowerCase().includes(word)) {\r\n          score += 2;\r\n        }\r\n        if (info.exports.some(e => e.toLowerCase().includes(word))) {\r\n          score += 2;\r\n        }\r\n      }\r\n\r\n      // Score based on category detected in query\r\n      const detectedCategory = this.detectQueryCategory(queryLower);\r\n      if (detectedCategory && info.category === detectedCategory) {\r\n        score += 5;\r\n      }\r\n\r\n      if (score > 0) {\r\n        scored.push({ path: filePath, info, score });\r\n      }\r\n    }\r\n\r\n    // Sort by score and limit\r\n    scored.sort((a, b) => b.score - a.score);\r\n    const results = scored.slice(0, maxFiles);\r\n\r\n    log('ContextAgent', `${results.length} relevant files found`, 'success');\r\n\r\n    return results;\r\n  }",
-      "normalized": "/** * Find relevant files for a query */ findRelevantFiles(query, maxFiles = 10){ log('ContextAgent', `Searching files for: \"$ { query.substring(0, 50)} ...\"`);const queryLower = query.toLowerCase();const queryWords = queryLower.split(/\\s+/).filter(w => w.length > 2);const scored = [];for(const [filePath, info] of Object.entries(this.index.files)){ let score = 0;// Score based on keywords for(const word of queryWords){ if(info.keywords.some(k => k.includes(word)|| word.includes(k))){ score += 3;} if(info.name.toLowerCase().includes(word)){ score += 2;} if(info.exports.some(e => e.toLowerCase().includes(word))){ score += 2;}  } // Score based on category detected in query const detectedCategory = this.detectQueryCategory(queryLower);if(detectedCategory && info.category === detectedCategory){ score += 5;} if(score > 0){ scored.push({ path: filePath, info, score });}  } // Sort by score and limit scored.sort((a, b)=> b.score - a.score);const results = scored.slice(0, maxFiles);log('ContextAgent', `$ { results.length } relevant files found`, 'success');return results;}",
-      "file": "lib\\mcp\\context-agent.cjs",
-      "class": "ContextAgent",
-      "name": "findRelevantFiles",
-      "line": 135,
-      "endLine": 177,
-      "score": 0
-    },
-    "ContextAgent.getFilesContent": {
-      "code": "  /**\r\n   * Get content of selected files\r\n   */\r\n  getFilesContent(files) {\r\n    const contents = [];\r\n\r\n    for (const file of files) {\r\n      const filePath = typeof file === 'string' ? file : file.path;\r\n      const content = readFile(filePath);\r\n\r\n      if (content) {\r\n        contents.push({\r\n          path: filePath,\r\n          content: content.length > 5000 ? content.substring(0, 5000) + '\\n// ... truncated' : content\r\n        });\r\n      }\r\n    }\r\n\r\n    return contents;\r\n  }",
-      "normalized": "/** * Get content of selected files */ getFilesContent(files){ const contents = [];for(const file of files){ const filePath = typeof file === 'string' ? file : file.path;const content = readFile(filePath);if(content){ contents.push({ path: filePath, content: content.length > 5000 ? content.substring(0, 5000)+ '\\n// ... truncated' : content });}  } return contents;}",
-      "file": "lib\\mcp\\context-agent.cjs",
-      "class": "ContextAgent",
-      "name": "getFilesContent",
-      "line": 201,
-      "endLine": 217,
-      "score": 0
-    },
-    "ContextAgent.getFilesByCategory": {
-      "code": "  /**\r\n   * Get files from a specific category\r\n   */\r\n  getFilesByCategory(category) {\r\n    return this.index.categories[category] || [];\r\n  }",
-      "normalized": "/** * Get files from a specific category */ getFilesByCategory(category){ return this.index.categories[category] || [];}",
-      "file": "lib\\mcp\\context-agent.cjs",
-      "class": "ContextAgent",
-      "name": "getFilesByCategory",
-      "line": 246,
-      "endLine": 248,
-      "score": 0
+      "score": 3
     },
     "ExperienceMemory.updatePatterns": {
       "code": "  /**\r\n   * Met à jour les statistiques de patterns\r\n   */\r\n  updatePatterns(event, outcome) {\r\n    const signature = this.getPatternSignature(event.task.fingerprint);\r\n\r\n    if (!this.patterns[signature]) {\r\n      this.patterns[signature] = { successes: 0, failures: 0 };\r\n    }\r\n\r\n    if (outcome === 'success') {\r\n      this.patterns[signature].successes++;\r\n    } else {\r\n      this.patterns[signature].failures++;\r\n    }\r\n  }",
@@ -159,7 +49,7 @@
       "name": "updatePatterns",
       "line": 353,
       "endLine": 365,
-      "score": 0
+      "score": 3
     },
     "ExperienceMemory.getStats": {
       "code": "  /**\r\n   * Obtient les statistiques\r\n   */\r\n  getStats() {\r\n    const total = this.events.length;\r\n    const successes = this.events.filter(e => e.outcome.status === 'success').length;\r\n    const failures = this.events.filter(e => e.outcome.status === 'failure').length;\r\n    const pending = this.events.filter(e => e.outcome.status === 'pending').length;\r\n\r\n    return {\r\n      totalEvents: total,\r\n      successes,\r\n      failures,\r\n      pending,\r\n      successRate: total > 0 ? ((successes / (total - pending)) * 100).toFixed(1) + '%' : 'N/A',\r\n      patternsCount: Object.keys(this.patterns).length,\r\n      vocabularySize: this.tfidf.vocabulary.size\r\n    };\r\n  }",
@@ -169,26 +59,16 @@
       "name": "getStats",
       "line": 437,
       "endLine": 452,
-      "score": 0
+      "score": 3
     }
   },
   "files": {
     "lib\\context\\method-search.cjs": {
       "path": "C:\\lolve-cartography\\lib\\context\\method-search.cjs",
       "methods": [
-        "MethodSearch.findRelevantMethods",
-        "MethodSearch.getMethodsContent"
+        "MethodSearch.findRelevantMethods"
       ],
-      "originalHash": "cd1b1ce827970271436a21fe0e1faa67"
-    },
-    "lib\\context\\search-session.cjs": {
-      "path": "C:\\lolve-cartography\\lib\\context\\search-session.cjs",
-      "methods": [
-        "SearchSession.getMethodsNeedingAnnotation",
-        "SearchSession.getAllLoadedFiles",
-        "SearchSession.getAtLevel"
-      ],
-      "originalHash": "94d41e9769df156dfdbd8740cb5c5aee"
+      "originalHash": "85b20f89ade4f2b9ce0a13c33d30b84c"
     },
     "lib\\experience-memory.cjs": {
       "path": "C:\\lolve-cartography\\lib\\experience-memory.cjs",
@@ -199,38 +79,13 @@
       ],
       "originalHash": "835aae17844744956e5eec8adc896646"
     },
-    "lib\\orchestrator.cjs": {
-      "path": "C:\\lolve-cartography\\lib\\orchestrator.cjs",
+    "lib\\context\\search-session.cjs": {
+      "path": "C:\\lolve-cartography\\lib\\context\\search-session.cjs",
       "methods": [
-        "Orchestrator.init",
-        "Orchestrator.buildOptimizedPrompt"
+        "SearchSession.getAllLoadedFiles",
+        "SearchSession.getAtLevel"
       ],
-      "originalHash": "442d0c1120b8cf6691041aa71b0eca9c"
-    },
-    "lib\\ai-client.cjs": {
-      "path": "C:\\lolve-cartography\\lib\\ai-client.cjs",
-      "methods": [
-        "AIClient.getStats"
-      ],
-      "originalHash": "2fa7daa30972b1530322743c383bc487"
-    },
-    "lib\\cache-agent.cjs": {
-      "path": "C:\\lolve-cartography\\lib\\cache-agent.cjs",
-      "methods": [
-        "CacheAgent.find",
-        "CacheAgent.getStats",
-        "CacheAgent.getExtendedStats"
-      ],
-      "originalHash": "8eb7e316d2b131597ea2caa2964c9051"
-    },
-    "lib\\mcp\\context-agent.cjs": {
-      "path": "C:\\lolve-cartography\\lib\\mcp\\context-agent.cjs",
-      "methods": [
-        "ContextAgent.findRelevantFiles",
-        "ContextAgent.getFilesContent",
-        "ContextAgent.getFilesByCategory"
-      ],
-      "originalHash": "3a6d28506c243439f5d07f839339b185"
+      "originalHash": "d3827f3a9e03775b2cb94750b1c46b20"
     }
   },
   "hashes": {}

@@ -169,15 +169,6 @@ lolve-cartography uses a **JIT annotation system** that generates annotations on
 const status = session.checkAnnotations();
 // { complete: ['Orb.nova'], outdated: ['Vertex.link'], missing: ['Apex.promote'] }
 
-// Get methods needing annotation with their code
-const { needsAnnotation, tokensEstimate } = session.getMethodsNeedingAnnotation({
-  includeOutdated: true,
-  maxMethods: 5
-});
-
-// Generate prompt for LLM annotation
-const { prompt } = session.generateAnnotationPrompt();
-
 // Apply received annotations to cache
 session.applyAnnotations([
   { key: 'Apex.promote', role: 'flow', description: 'Promotes Apex to Vertex' }
