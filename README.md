@@ -1,5 +1,11 @@
 # lolve-cartography
 
+/** TODO: This project is a mess
+
+    Il va falloit complétement le repenser 
+
+*//
+
 Codebase cartography and method indexing tools.
 
 Analyze your JavaScript codebase structure, generate method indexes with automatically inferred metadata (roles, effects, consumers).
