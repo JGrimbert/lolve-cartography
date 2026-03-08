@@ -1,0 +1,87 @@
+{
+  "timestamp": "2026-01-17T12:00:10.098Z",
+  "methods": {
+    "SearchSession.getAtLevel": {
+      "code": "  // ==========================================================================\r\n  // Niveaux de détail progressifs\r\n  // ==========================================================================\r\n\r\n  /**\r\n   * Récupère les résultats avec un niveau de détail spécifique\r\n   * @param {number} level - Niveau de détail (0-4)\r\n   *   0: Clés uniquement\r\n   *   1: + descriptions\r\n   *   2: + signatures complètes\r\n   *   3: + code des méthodes\r\n   *   4: + fichiers complets\r\n   * @param {Object} options - Options supplémentaires\r\n   * @returns {Array|Object} Résultats au niveau demandé\r\n   */\r\n  getAtLevel(level = 1, options = {}) {\r\n    const { includeDescriptions = true } = options;\r\n\r\n    switch (level) {\r\n      case 0:\r\n        return this.keys;\r\n\r\n      case 1:\r\n        return this._results.map(({ key, method, score }) => {\r\n          const result = {\r\n            key,\r\n            class: method.class,\r\n            name: method.name,\r\n            role: method.role,\r\n            score\r\n          };\r\n          if (includeDescriptions && method.description) {\r\n            result.description = method.description;\r\n          }\r\n          return result;\r\n        });\r\n\r\n      case 2:\r\n        return this._results.map(({ key, method, score }) => {\r\n          const result = {\r\n            key,\r\n            file: method.file,\r\n            class: method.class,\r\n            signature: method.signature,\r\n            role: method.role,\r\n            effects: method.effects,\r\n            consumers: method.consumers,\r\n            score\r\n          };\r\n          if (includeDescriptions && method.description) {\r\n            result.description = method.description;\r\n          }\r\n          return result;\r\n        });\r\n\r\n      case 3:\r\n        return this._results.map(({ key, method, score }) => {\r\n          if (!this._loadedCode.has(key)) {\r\n            const code = this.agent.methodIndexer.extractMethodCode(key);\r\n            if (code) {\r\n              this._loadedCode.set(key, code);\r\n            }\r\n          }\r\n          const result = {\r\n            key,\r\n            file: method.file,\r\n            class: method.class,\r\n            signature: method.signature,\r\n            role: method.role,\r\n            code: this._loadedCode.get(key) || null,\r\n            score\r\n          };\r\n          if (includeDescriptions && method.description) {\r\n            result.description = method.description;\r\n          }\r\n          return result;\r\n        });\r\n\r\n      case 4:\r\n        const fileGroups = {};\r\n        for (const { key, method } of this._results) {\r\n          const file = method.file;\r\n          if (!fileGroups[file]) {\r\n            const loaded = this.loadFile(file);\r\n            fileGroups[file] = {\r\n              path: file,\r\n              content: loaded?.content || null,\r\n              methods: []\r\n            };\r\n          }\r\n          fileGroups[file].methods.push(key);\r\n        }\r\n        return Object.values(fileGroups);\r\n\r\n      default:\r\n        return this.getAtLevel(1);\r\n    }\r\n  }",
+      "normalized": "// ========================================================================== // Niveaux de détail progressifs // ========================================================================== /** * Récupère les résultats avec un niveau de détail spécifique * @param { number } level - Niveau de détail(0-4)* 0: Clés uniquement * 1: + descriptions * 2: + signatures complètes * 3: + code des méthodes * 4: + fichiers complets * @param { Object } options - Options supplémentaires * @returns { Array|Object } Résultats au niveau demandé */ getAtLevel(level = 1, options = { }){ const { includeDescriptions = true } = options;switch(level){ case 0: return this.keys;case 1: return this._results.map(({ key, method, score })=> { const result = { key, class: method.class, name: method.name, role: method.role, score };if(includeDescriptions && method.description){ result.description = method.description;} return result;});case 2: return this._results.map(({ key, method, score })=> { const result = { key, file: method.file, class: method.class, signature: method.signature, role: method.role, effects: method.effects, consumers: method.consumers, score };if(includeDescriptions && method.description){ result.description = method.description;} return result;});case 3: return this._results.map(({ key, method, score })=> { if(!this._loadedCode.has(key)){ const code = this.agent.methodIndexer.extractMethodCode(key);if(code){ this._loadedCode.set(key, code);}  } const result = { key, file: method.file, class: method.class, signature: method.signature, role: method.role, code: this._loadedCode.get(key)|| null, score };if(includeDescriptions && method.description){ result.description = method.description;} return result;});case 4: const fileGroups = { };for(const { key, method } of this._results){ const file = method.file;if(!fileGroups[file]){ const loaded = this.loadFile(file);fileGroups[file] = { path: file, content: loaded?.content || null, methods: [] };} fileGroups[file].methods.push(key);} return Object.values(fileGroups);default: return this.getAtLevel(1);}  }",
+      "file": "lib\\context\\search-session.cjs",
+      "class": "SearchSession",
+      "name": "getAtLevel",
+      "line": 429,
+      "endLine": 511,
+      "score": 6
+    },
+    "ExperienceMemory.updatePatterns": {
+      "code": "  /**\r\n   * Met à jour les statistiques de patterns\r\n   */\r\n  updatePatterns(event, outcome) {\r\n    const signature = this.getPatternSignature(event.task.fingerprint);\r\n\r\n    if (!this.patterns[signature]) {\r\n      this.patterns[signature] = { successes: 0, failures: 0 };\r\n    }\r\n\r\n    if (outcome === 'success') {\r\n      this.patterns[signature].successes++;\r\n    } else {\r\n      this.patterns[signature].failures++;\r\n    }\r\n  }",
+      "normalized": "/** * Met à jour les statistiques de patterns */ updatePatterns(event, outcome){ const signature = this.getPatternSignature(event.task.fingerprint);if(!this.patterns[signature]){ this.patterns[signature] = { successes: 0, failures: 0 };} if(outcome === 'success'){ this.patterns[signature].successes++;} else { this.patterns[signature].failures++;}  }",
+      "file": "lib\\experience-memory.cjs",
+      "class": "ExperienceMemory",
+      "name": "updatePatterns",
+      "line": 353,
+      "endLine": 365,
+      "score": 6
+    },
+    "ExperienceMemory.getStats": {
+      "code": "  /**\r\n   * Obtient les statistiques\r\n   */\r\n  getStats() {\r\n    const total = this.events.length;\r\n    const successes = this.events.filter(e => e.outcome.status === 'success').length;\r\n    const failures = this.events.filter(e => e.outcome.status === 'failure').length;\r\n    const pending = this.events.filter(e => e.outcome.status === 'pending').length;\r\n\r\n    return {\r\n      totalEvents: total,\r\n      successes,\r\n      failures,\r\n      pending,\r\n      successRate: total > 0 ? ((successes / (total - pending)) * 100).toFixed(1) + '%' : 'N/A',\r\n      patternsCount: Object.keys(this.patterns).length,\r\n      vocabularySize: this.tfidf.vocabulary.size\r\n    };\r\n  }",
+      "normalized": "/** * Obtient les statistiques */ getStats(){ const total = this.events.length;const successes = this.events.filter(e => e.outcome.status === 'success').length;const failures = this.events.filter(e => e.outcome.status === 'failure').length;const pending = this.events.filter(e => e.outcome.status === 'pending').length;return { totalEvents: total, successes, failures, pending, successRate: total > 0 ?((successes /(total - pending))* 100).toFixed(1)+ '%' : 'N/A', patternsCount: Object.keys(this.patterns).length, vocabularySize: this.tfidf.vocabulary.size };}",
+      "file": "lib\\experience-memory.cjs",
+      "class": "ExperienceMemory",
+      "name": "getStats",
+      "line": 437,
+      "endLine": 452,
+      "score": 6
+    },
+    "FingerprintGenerator.getPatternSignature": {
+      "code": "  /**\r\n   * Calcule une signature de pattern (pour statistiques)\r\n   */\r\n  getPatternSignature(fingerprint) {\r\n    // Signature simplifiée pour les statistiques de patterns\r\n    const parts = [\r\n      `intent:${fingerprint.intent}`,\r\n      ...fingerprint.domains.map(d => `domain:${d}`)\r\n    ];\r\n\r\n    if (fingerprint.errorType) {\r\n      parts.push(`errorType:${fingerprint.errorType}`);\r\n    }\r\n\r\n    return parts.sort().join('+');\r\n  }",
+      "normalized": "/** * Calcule une signature de pattern(pour statistiques)*/ getPatternSignature(fingerprint){ // Signature simplifiée pour les statistiques de patterns const parts = [ `intent:$ { fingerprint.intent } `, ...fingerprint.domains.map(d => `domain:$ { d } `)];if(fingerprint.errorType){ parts.push(`errorType:$ { fingerprint.errorType } `);} return parts.sort().join('+');}",
+      "file": "lib\\fingerprint-generator.cjs",
+      "class": "FingerprintGenerator",
+      "name": "getPatternSignature",
+      "line": 262,
+      "endLine": 274,
+      "score": 6
+    },
+    "ContextAgent.findRelevantMethods": {
+      "code": "  // ==========================================================================\r\n  // METHOD-LEVEL GRANULARITY (delegated to MethodSearch)\r\n  // ==========================================================================\r\n\r\n  /**\r\n   * Find relevant methods for a query\r\n   * @param {string} query - User query\r\n   * @param {Object} options - Search options\r\n   * @returns {Array} List of relevant methods with their score\r\n   */\r\n  findRelevantMethods(query, options = {}) {\r\n    return this.methodSearch.findRelevantMethods(query, options);\r\n  }",
+      "normalized": "// ========================================================================== // METHOD-LEVEL GRANULARITY(delegated to MethodSearch)// ========================================================================== /** * Find relevant methods for a query * @param { string } query - User query * @param { Object } options - Search options * @returns { Array } List of relevant methods with their score */ findRelevantMethods(query, options = { }){ return this.methodSearch.findRelevantMethods(query, options);}",
+      "file": "lib\\mcp\\context-agent.cjs",
+      "class": "ContextAgent",
+      "name": "findRelevantMethods",
+      "line": 141,
+      "endLine": 143,
+      "score": 6
+    }
+  },
+  "files": {
+    "lib\\context\\search-session.cjs": {
+      "path": "C:\\lolve-cartography\\lib\\context\\search-session.cjs",
+      "methods": [
+        "SearchSession.getAtLevel"
+      ],
+      "originalHash": "d3827f3a9e03775b2cb94750b1c46b20"
+    },
+    "lib\\experience-memory.cjs": {
+      "path": "C:\\lolve-cartography\\lib\\experience-memory.cjs",
+      "methods": [
+        "ExperienceMemory.updatePatterns",
+        "ExperienceMemory.getStats"
+      ],
+      "originalHash": "835aae17844744956e5eec8adc896646"
+    },
+    "lib\\fingerprint-generator.cjs": {
+      "path": "C:\\lolve-cartography\\lib\\fingerprint-generator.cjs",
+      "methods": [
+        "FingerprintGenerator.getPatternSignature"
+      ],
+      "originalHash": "f0c9f970b123de94068e671604596f64"
+    },
+    "lib\\mcp\\context-agent.cjs": {
+      "path": "C:\\lolve-cartography\\lib\\mcp\\context-agent.cjs",
+      "methods": [
+        "ContextAgent.findRelevantMethods"
+      ],
+      "originalHash": "e8eb524438e4c2aa5e87fac3dd7067ad"
+    }
+  },
+  "hashes": {}
+}

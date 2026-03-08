@@ -1,5 +1,11 @@
 # lolve-cartography
 
+/** TODO: This project is a mess
+
+    Il va falloit complétement le repenser 
+
+*//
+
 Codebase cartography and method indexing tools.
 
 Analyze your JavaScript codebase structure, generate method indexes with automatically inferred metadata (roles, effects, consumers).
@@ -29,17 +35,17 @@ npm link
 # Navigate to your project
 cd /path/to/your/project
 
-# Generate method index
-lolve-cartography annotate index
+# Full index (RECOMMENDED): index + enrich + merge all in one
+lolve-cartography annotate full
 
-# Scan codebase and list methods with inferred metadata
-lolve-cartography annotate scan
+# Or step by step:
+lolve-cartography annotate index     # Generate method index with roles
+lolve-cartography annotate enrich    # Analyze effects & consumers
+lolve-cartography annotate scan      # Preview what would be enriched
+lolve-cartography annotate stats     # View statistics
 
-# Enrich cartography with roles, effects, consumers
-lolve-cartography annotate enrich
-
-# View statistics
-lolve-cartography annotate stats
+# Force full re-indexing
+lolve-cartography annotate full --force
 ```
 
 ## Architecture Overview
@@ -169,15 +175,6 @@ lolve-cartography uses a **JIT annotation system** that generates annotations on
 const status = session.checkAnnotations();
 // { complete: ['Orb.nova'], outdated: ['Vertex.link'], missing: ['Apex.promote'] }
 
-// Get methods needing annotation with their code
-const { needsAnnotation, tokensEstimate } = session.getMethodsNeedingAnnotation({
-  includeOutdated: true,
-  maxMethods: 5
-});
-
-// Generate prompt for LLM annotation
-const { prompt } = session.generateAnnotationPrompt();
-
 // Apply received annotations to cache
 session.applyAnnotations([
   { key: 'Apex.promote', role: 'flow', description: 'Promotes Apex to Vertex' }
@@ -232,12 +229,12 @@ lc-index                     # Method index generation
 
 | Command | Description |
 |---------|-------------|
-| `annotate scan` | Scan codebase, list methods with inferred metadata |
-| `annotate enrich` | Enrich cartography with roles, effects, consumers |
+| `annotate full` | **RECOMMENDED** - Full pipeline: index + enrich + merge |
+| `annotate index` | Generate/update method index (roles only) |
+| `annotate enrich` | Analyze effects, consumers (separate file) |
+| `annotate scan` | Preview methods and what can be inferred |
 | `annotate apply` | Generate Markdown report with enrichments |
 | `annotate stats` | Display cartography statistics |
-| `annotate index` | Generate/update method index |
-| `index` | Shortcut for `annotate index` |
 
 ### Options
 
