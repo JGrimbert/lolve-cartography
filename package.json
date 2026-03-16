@@ -28,6 +28,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.2",
     "acorn": "^8.15.0",
+    "acorn-typescript": "^1.4.13",
     "chokidar": "^5.0.0"
   },
   "engines": {

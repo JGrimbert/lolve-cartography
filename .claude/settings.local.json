@@ -1,6 +1,12 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(node:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "lolve-context"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
