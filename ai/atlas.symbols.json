@@ -1,0 +1,1404 @@
+{
+  "classes": {
+    "SourceParser": {
+      "file": "lib\\annotation-manager.cjs",
+      "methods": [
+        "parseFile",
+        "extractClasses",
+        "extractMethods",
+        "extractStandaloneFunctions",
+        "parseJSDoc",
+        "extractBracedBlock",
+        "extractArrowBody",
+        "extractImports",
+        "extractExports"
+      ]
+    },
+    "EffectAnalyzer": {
+      "file": "lib\\annotation-manager.cjs",
+      "methods": [
+        "analyzeEffects",
+        "analyzeContext"
+      ]
+    },
+    "ConsumerAnalyzer": {
+      "file": "lib\\annotation-manager.cjs",
+      "methods": [
+        "buildCallGraph",
+        "getConsumers"
+      ]
+    },
+    "SuggestionGenerator": {
+      "file": "lib\\annotation-manager.cjs",
+      "methods": [
+        "generateAll",
+        "generateForFile",
+        "suggestClassRole",
+        "suggestMethodRole",
+        "calculateConfidence"
+      ]
+    },
+    "FileAnalyzer": {
+      "file": "lib\\context\\file-analyzer.cjs",
+      "methods": [
+        "analyzeFile",
+        "detectCategory",
+        "extractExports",
+        "extractDependencies",
+        "extractKeywords",
+        "extractJSDoc",
+        "parseJSDocDescription",
+        "parseJSDocTags"
+      ]
+    },
+    "MethodSearch": {
+      "file": "lib\\context\\method-search.cjs",
+      "methods": [
+        "findRelevantMethods",
+        "_doSearch",
+        "searchMethods"
+      ]
+    },
+    "SearchSession": {
+      "file": "lib\\context\\search-session.cjs",
+      "methods": [
+        "_search",
+        "_addHistory",
+        "results",
+        "count",
+        "keys",
+        "history",
+        "summary",
+        "exclude",
+        "resetExclusions",
+        "retry",
+        "expand",
+        "_findMethodsOfClass",
+        "_findCreatorMethods",
+        "loadCode",
+        "loadFile",
+        "getAllLoadedCode",
+        "getAllLoadedFiles",
+        "getAtLevel",
+        "checkAnnotations",
+        "applyAnnotations",
+        "toContext",
+        "toPrompt"
+      ]
+    },
+    "TFIDFEmbedding": {
+      "file": "lib\\experience-memory.cjs",
+      "methods": [
+        "addDocument",
+        "embed",
+        "cosineSimilarity",
+        "serialize",
+        "deserialize"
+      ]
+    },
+    "ExperienceMemory": {
+      "file": "lib\\experience-memory.cjs",
+      "methods": [
+        "init",
+        "createEvent",
+        "fingerprintToTerms",
+        "updateDecision",
+        "recordModifications",
+        "markSuccess",
+        "markFailure",
+        "addLesson",
+        "categorizeError",
+        "updatePatterns",
+        "getPatternSignature",
+        "findSimilar",
+        "getCurrentEvent",
+        "getEvent",
+        "getStats",
+        "save"
+      ]
+    },
+    "RiskInferenceEngine": {
+      "file": "lib\\experience-memory.cjs",
+      "methods": [
+        "analyzeRisks",
+        "createWarningFromFailure",
+        "analyzePatternRisk",
+        "detectSpecificRisks",
+        "calculateOverallRisk",
+        "formatRiskReport"
+      ]
+    },
+    "FingerprintGenerator": {
+      "file": "lib\\fingerprint-generator.cjs",
+      "methods": [
+        "generate",
+        "detectIntent",
+        "detectDomains",
+        "extractKeywords",
+        "detectEffects",
+        "extractRoles",
+        "detectErrorType",
+        "estimateComplexity",
+        "toCanonicalString",
+        "getPatternSignature"
+      ]
+    },
+    "ExtractForClaude": {
+      "file": "lib\\mcp\\extract-for-claude.cjs",
+      "methods": [
+        "init",
+        "run",
+        "displayClaudeCodeInstructions",
+        "generateClaudeCodeCommand",
+        "wrapText",
+        "waitForUserValidation",
+        "displaySummary",
+        "showHelp"
+      ]
+    },
+    "MethodReinjector": {
+      "file": "lib\\mcp\\method-reinjector.cjs",
+      "methods": [
+        "parseModifiedFile",
+        "parseAsJavaScript",
+        "detectChanges",
+        "replaceMethodInFile",
+        "deleteMethodFromFile",
+        "similarity",
+        "levenshtein",
+        "findInsertionPoint",
+        "reinject"
+      ]
+    },
+    "MethodSnapshot": {
+      "file": "lib\\mcp\\method-snapshot.cjs",
+      "methods": [
+        "capture",
+        "normalizeCode",
+        "hashFile",
+        "checkFileIntegrity",
+        "save",
+        "load",
+        "generateTempFile"
+      ]
+    },
+    "PreprocessAgent": {
+      "file": "lib\\mcp\\preprocess-agent.cjs",
+      "methods": [
+        "init",
+        "process",
+        "detectDomains",
+        "extractKeywords",
+        "estimateComplexity",
+        "clean",
+        "normalizeTerms",
+        "detectIntent",
+        "extractDomainTerms",
+        "enrich",
+        "generateSystemPrompt",
+        "estimateTokens"
+      ]
+    },
+    "Atlas": {
+      "file": "lib\\atlas.cjs",
+      "methods": [
+        "fromMethodIndex",
+        "fromCallGraph",
+        "fromFileIndex",
+        "toJSON"
+      ]
+    },
+    "ContextAgent": {
+      "file": "lib\\mcp\\context-agent.cjs",
+      "methods": [
+        "init",
+        "isIndexStale",
+        "buildIndex",
+        "findRelevantMethods",
+        "searchMethods",
+        "createSearchSession",
+        "formatProjectContext"
+      ]
+    },
+    "LolveMCPServer": {
+      "file": "lib\\mcp\\lolvemcp.js",
+      "methods": [
+        "log",
+        "clearModuleCache",
+        "extractMethods",
+        "startWatching",
+        "handleFileChange",
+        "start",
+        "setupHandlers"
+      ]
+    },
+    "ASTParser": {
+      "file": "lib\\mcp\\method-indexer.cjs",
+      "methods": [
+        "parseFile",
+        "extractVueScript",
+        "extractClasses",
+        "extractClassInfo",
+        "extractMethodInfo",
+        "paramToString",
+        "extractJSDoc",
+        "parseJSDoc",
+        "extractFunctions"
+      ]
+    },
+    "MethodIndexer": {
+      "file": "lib\\mcp\\method-indexer.cjs",
+      "methods": [
+        "loadIndex",
+        "saveIndex",
+        "hasFileChanged",
+        "indexAll",
+        "indexFile",
+        "removeFileFromIndex",
+        "inferRole",
+        "extractMethodCode",
+        "searchMethods",
+        "getStats"
+      ]
+    },
+    "AnnotationCache": {
+      "file": "lib\\mcp\\method-indexer.cjs",
+      "methods": [
+        "load",
+        "save",
+        "get",
+        "set",
+        "isUpToDate",
+        "remove",
+        "getStats",
+        "mergeWithMethod"
+      ]
+    },
+    "AtlasGenerator": {
+      "file": "lib\\atlas-generator.cjs",
+      "methods": [
+        "generate",
+        "buildRepo",
+        "buildSyms",
+        "buildCalls",
+        "buildMods",
+        "scoreNodes",
+        "writeArtifacts"
+      ]
+    }
+  },
+  "methods": {
+    "main": {
+      "signature": "main()",
+      "role": "internal",
+      "file": "lib\\setup-claude-hooks.cjs"
+    },
+    "log": {
+      "signature": "log(message, type = 'info')",
+      "role": "internal",
+      "file": "lib\\setup-claude-hooks.cjs"
+    },
+    "SourceParser.parseFile": {
+      "signature": "parseFile(filePath)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SourceParser.extractClasses": {
+      "signature": "extractClasses(content)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SourceParser.extractMethods": {
+      "signature": "extractMethods(classBody, className)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SourceParser.extractStandaloneFunctions": {
+      "signature": "extractStandaloneFunctions(content)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SourceParser.parseJSDoc": {
+      "signature": "parseJSDoc(jsdocRaw)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SourceParser.extractBracedBlock": {
+      "signature": "extractBracedBlock(content, startIndex)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SourceParser.extractArrowBody": {
+      "signature": "extractArrowBody(content, startIndex)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SourceParser.extractImports": {
+      "signature": "extractImports(content)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SourceParser.extractExports": {
+      "signature": "extractExports(content)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "EffectAnalyzer.analyzeEffects": {
+      "signature": "analyzeEffects(methodBody, className)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "EffectAnalyzer.analyzeContext": {
+      "signature": "analyzeContext(method)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "ConsumerAnalyzer.buildCallGraph": {
+      "signature": "buildCallGraph(parsedFiles)",
+      "role": "core",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "ConsumerAnalyzer.getConsumers": {
+      "signature": "getConsumers(className, methodName)",
+      "role": "service",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SuggestionGenerator.generateAll": {
+      "signature": "generateAll()",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SuggestionGenerator.generateForFile": {
+      "signature": "generateForFile(parsedFile)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SuggestionGenerator.suggestClassRole": {
+      "signature": "suggestClassRole(cls)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SuggestionGenerator.suggestMethodRole": {
+      "signature": "suggestMethodRole(method)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "SuggestionGenerator.calculateConfidence": {
+      "signature": "calculateConfidence(suggested)",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "runFull": {
+      "signature": "runFull(options = { force: false })",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "FileAnalyzer.analyzeFile": {
+      "signature": "analyzeFile(filePath)",
+      "role": "internal",
+      "file": "lib\\context\\file-analyzer.cjs"
+    },
+    "FileAnalyzer.detectCategory": {
+      "signature": "detectCategory(relativePath, content)",
+      "role": "internal",
+      "file": "lib\\context\\file-analyzer.cjs"
+    },
+    "FileAnalyzer.extractExports": {
+      "signature": "extractExports(content)",
+      "role": "internal",
+      "file": "lib\\context\\file-analyzer.cjs"
+    },
+    "FileAnalyzer.extractDependencies": {
+      "signature": "extractDependencies(content)",
+      "role": "internal",
+      "file": "lib\\context\\file-analyzer.cjs"
+    },
+    "FileAnalyzer.extractKeywords": {
+      "signature": "extractKeywords(content, category)",
+      "role": "internal",
+      "file": "lib\\context\\file-analyzer.cjs"
+    },
+    "FileAnalyzer.extractJSDoc": {
+      "signature": "extractJSDoc(content)",
+      "role": "internal",
+      "file": "lib\\context\\file-analyzer.cjs"
+    },
+    "FileAnalyzer.parseJSDocDescription": {
+      "signature": "parseJSDocDescription(jsdocContent)",
+      "role": "internal",
+      "file": "lib\\context\\file-analyzer.cjs"
+    },
+    "FileAnalyzer.parseJSDocTags": {
+      "signature": "parseJSDocTags(jsdocContent)",
+      "role": "internal",
+      "file": "lib\\context\\file-analyzer.cjs"
+    },
+    "MethodSearch.findRelevantMethods": {
+      "signature": "findRelevantMethods(query, options = {})",
+      "role": "service",
+      "file": "lib\\context\\method-search.cjs"
+    },
+    "MethodSearch._doSearch": {
+      "signature": "_doSearch(query, options)",
+      "role": "internal",
+      "file": "lib\\context\\method-search.cjs"
+    },
+    "MethodSearch.searchMethods": {
+      "signature": "searchMethods(criteria = {})",
+      "role": "internal",
+      "file": "lib\\context\\method-search.cjs"
+    },
+    "SearchSession._search": {
+      "signature": "_search()",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession._addHistory": {
+      "signature": "_addHistory(action, details)",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.results": {
+      "signature": "results()",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.count": {
+      "signature": "count()",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.keys": {
+      "signature": "keys()",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.history": {
+      "signature": "history()",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.summary": {
+      "signature": "summary()",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.exclude": {
+      "signature": "exclude(methodKeys)",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.resetExclusions": {
+      "signature": "resetExclusions()",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.retry": {
+      "signature": "retry(newQuery = null, newOptions = {})",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.expand": {
+      "signature": "expand(methodKey, options = {})",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession._findMethodsOfClass": {
+      "signature": "_findMethodsOfClass(className)",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession._findCreatorMethods": {
+      "signature": "_findCreatorMethods(className)",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.loadCode": {
+      "signature": "loadCode(methodKeys)",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.loadFile": {
+      "signature": "loadFile(filePath)",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.getAllLoadedCode": {
+      "signature": "getAllLoadedCode()",
+      "role": "service",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.getAllLoadedFiles": {
+      "signature": "getAllLoadedFiles()",
+      "role": "service",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.getAtLevel": {
+      "signature": "getAtLevel(level = 1, options = {})",
+      "role": "service",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.checkAnnotations": {
+      "signature": "checkAnnotations()",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.applyAnnotations": {
+      "signature": "applyAnnotations(annotations)",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.toContext": {
+      "signature": "toContext(options = {})",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "SearchSession.toPrompt": {
+      "signature": "toPrompt()",
+      "role": "internal",
+      "file": "lib\\context\\search-session.cjs"
+    },
+    "TFIDFEmbedding.addDocument": {
+      "signature": "addDocument(terms)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "TFIDFEmbedding.embed": {
+      "signature": "embed(terms)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "TFIDFEmbedding.cosineSimilarity": {
+      "signature": "cosineSimilarity(v1, v2)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "TFIDFEmbedding.serialize": {
+      "signature": "serialize()",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "TFIDFEmbedding.deserialize": {
+      "signature": "deserialize(data)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.init": {
+      "signature": "init()",
+      "role": "entry",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.createEvent": {
+      "signature": "createEvent(query, fingerprint, context = {})",
+      "role": "core",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.fingerprintToTerms": {
+      "signature": "fingerprintToTerms(fingerprint)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.updateDecision": {
+      "signature": "updateDecision(proposalChosen, approach)",
+      "role": "service",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.recordModifications": {
+      "signature": "recordModifications(modifications)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.markSuccess": {
+      "signature": "markSuccess(lesson = null)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.markFailure": {
+      "signature": "markFailure(errorType, errorMessage, cause = {})",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.addLesson": {
+      "signature": "addLesson(lesson)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.categorizeError": {
+      "signature": "categorizeError(errorType, errorMessage)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.updatePatterns": {
+      "signature": "updatePatterns(event, outcome)",
+      "role": "service",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.getPatternSignature": {
+      "signature": "getPatternSignature(fingerprint)",
+      "role": "service",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.findSimilar": {
+      "signature": "findSimilar(fingerprint, options = {})",
+      "role": "service",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.getCurrentEvent": {
+      "signature": "getCurrentEvent()",
+      "role": "service",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.getEvent": {
+      "signature": "getEvent(id)",
+      "role": "service",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.getStats": {
+      "signature": "getStats()",
+      "role": "service",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "ExperienceMemory.save": {
+      "signature": "save()",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "RiskInferenceEngine.analyzeRisks": {
+      "signature": "analyzeRisks(fingerprint, similarExperiences = [])",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "RiskInferenceEngine.createWarningFromFailure": {
+      "signature": "createWarningFromFailure(event, similarity)",
+      "role": "core",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "RiskInferenceEngine.analyzePatternRisk": {
+      "signature": "analyzePatternRisk(fingerprint)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "RiskInferenceEngine.detectSpecificRisks": {
+      "signature": "detectSpecificRisks(fingerprint)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "RiskInferenceEngine.calculateOverallRisk": {
+      "signature": "calculateOverallRisk(warnings, blockedApproaches)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "RiskInferenceEngine.formatRiskReport": {
+      "signature": "formatRiskReport(analysis)",
+      "role": "internal",
+      "file": "lib\\experience-memory.cjs"
+    },
+    "FingerprintGenerator.generate": {
+      "signature": "generate(query, context = {})",
+      "role": "internal",
+      "file": "lib\\fingerprint-generator.cjs"
+    },
+    "FingerprintGenerator.detectIntent": {
+      "signature": "detectIntent(queryLower)",
+      "role": "internal",
+      "file": "lib\\fingerprint-generator.cjs"
+    },
+    "FingerprintGenerator.detectDomains": {
+      "signature": "detectDomains(queryLower, context = {})",
+      "role": "internal",
+      "file": "lib\\fingerprint-generator.cjs"
+    },
+    "FingerprintGenerator.extractKeywords": {
+      "signature": "extractKeywords(queryLower)",
+      "role": "internal",
+      "file": "lib\\fingerprint-generator.cjs"
+    },
+    "FingerprintGenerator.detectEffects": {
+      "signature": "detectEffects(queryLower)",
+      "role": "internal",
+      "file": "lib\\fingerprint-generator.cjs"
+    },
+    "FingerprintGenerator.extractRoles": {
+      "signature": "extractRoles(context)",
+      "role": "internal",
+      "file": "lib\\fingerprint-generator.cjs"
+    },
+    "FingerprintGenerator.detectErrorType": {
+      "signature": "detectErrorType(queryLower)",
+      "role": "internal",
+      "file": "lib\\fingerprint-generator.cjs"
+    },
+    "FingerprintGenerator.estimateComplexity": {
+      "signature": "estimateComplexity(queryLower, context = {})",
+      "role": "internal",
+      "file": "lib\\fingerprint-generator.cjs"
+    },
+    "FingerprintGenerator.toCanonicalString": {
+      "signature": "toCanonicalString(fingerprint)",
+      "role": "internal",
+      "file": "lib\\fingerprint-generator.cjs"
+    },
+    "FingerprintGenerator.getPatternSignature": {
+      "signature": "getPatternSignature(fingerprint)",
+      "role": "service",
+      "file": "lib\\fingerprint-generator.cjs"
+    },
+    "ExtractForClaude.init": {
+      "signature": "init()",
+      "role": "entry",
+      "file": "lib\\mcp\\extract-for-claude.cjs"
+    },
+    "ExtractForClaude.run": {
+      "signature": "run(query)",
+      "role": "internal",
+      "file": "lib\\mcp\\extract-for-claude.cjs"
+    },
+    "ExtractForClaude.displayClaudeCodeInstructions": {
+      "signature": "displayClaudeCodeInstructions(tempPath, originalQuery)",
+      "role": "internal",
+      "file": "lib\\mcp\\extract-for-claude.cjs"
+    },
+    "ExtractForClaude.generateClaudeCodeCommand": {
+      "signature": "generateClaudeCodeCommand(originalQuery, tempPath)",
+      "role": "internal",
+      "file": "lib\\mcp\\extract-for-claude.cjs"
+    },
+    "ExtractForClaude.wrapText": {
+      "signature": "wrapText(text, maxWidth)",
+      "role": "internal",
+      "file": "lib\\mcp\\extract-for-claude.cjs"
+    },
+    "ExtractForClaude.waitForUserValidation": {
+      "signature": "waitForUserValidation()",
+      "role": "internal",
+      "file": "lib\\mcp\\extract-for-claude.cjs"
+    },
+    "ExtractForClaude.displaySummary": {
+      "signature": "displaySummary(result, snapshotData)",
+      "role": "internal",
+      "file": "lib\\mcp\\extract-for-claude.cjs"
+    },
+    "ExtractForClaude.showHelp": {
+      "signature": "showHelp()",
+      "role": "internal",
+      "file": "lib\\mcp\\extract-for-claude.cjs"
+    },
+    "MethodReinjector.parseModifiedFile": {
+      "signature": "parseModifiedFile(tempFilePath)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-reinjector.cjs"
+    },
+    "MethodReinjector.parseAsJavaScript": {
+      "signature": "parseAsJavaScript(content)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-reinjector.cjs"
+    },
+    "MethodReinjector.detectChanges": {
+      "signature": "detectChanges(originalSnapshot, modifiedMethods)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-reinjector.cjs"
+    },
+    "MethodReinjector.replaceMethodInFile": {
+      "signature": "replaceMethodInFile(filePath, oldCode, newCode)",
+      "role": "service",
+      "file": "lib\\mcp\\method-reinjector.cjs"
+    },
+    "MethodReinjector.deleteMethodFromFile": {
+      "signature": "deleteMethodFromFile(filePath, oldCode)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-reinjector.cjs"
+    },
+    "MethodReinjector.similarity": {
+      "signature": "similarity(s1, s2)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-reinjector.cjs"
+    },
+    "MethodReinjector.levenshtein": {
+      "signature": "levenshtein(s1, s2)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-reinjector.cjs"
+    },
+    "MethodReinjector.findInsertionPoint": {
+      "signature": "findInsertionPoint(content, className)",
+      "role": "service",
+      "file": "lib\\mcp\\method-reinjector.cjs"
+    },
+    "MethodReinjector.reinject": {
+      "signature": "reinject(snapshotPath, tempFilePath)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-reinjector.cjs"
+    },
+    "MethodSnapshot.capture": {
+      "signature": "capture(methodKeys, options = {})",
+      "role": "internal",
+      "file": "lib\\mcp\\method-snapshot.cjs"
+    },
+    "MethodSnapshot.normalizeCode": {
+      "signature": "normalizeCode(code)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-snapshot.cjs"
+    },
+    "MethodSnapshot.hashFile": {
+      "signature": "hashFile(filePath)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-snapshot.cjs"
+    },
+    "MethodSnapshot.checkFileIntegrity": {
+      "signature": "checkFileIntegrity(snapshot)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-snapshot.cjs"
+    },
+    "MethodSnapshot.save": {
+      "signature": "save(snapshot, outputPath)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-snapshot.cjs"
+    },
+    "MethodSnapshot.load": {
+      "signature": "load(snapshotPath)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-snapshot.cjs"
+    },
+    "MethodSnapshot.generateTempFile": {
+      "signature": "generateTempFile(snapshot, options = {})",
+      "role": "internal",
+      "file": "lib\\mcp\\method-snapshot.cjs"
+    },
+    "PreprocessAgent.init": {
+      "signature": "init()",
+      "role": "entry",
+      "file": "lib\\mcp\\preprocess-agent.cjs"
+    },
+    "PreprocessAgent.process": {
+      "signature": "process(query, context = {})",
+      "role": "internal",
+      "file": "lib\\mcp\\preprocess-agent.cjs"
+    },
+    "PreprocessAgent.detectDomains": {
+      "signature": "detectDomains(query, context = {})",
+      "role": "internal",
+      "file": "lib\\mcp\\preprocess-agent.cjs"
+    },
+    "PreprocessAgent.extractKeywords": {
+      "signature": "extractKeywords(query)",
+      "role": "internal",
+      "file": "lib\\mcp\\preprocess-agent.cjs"
+    },
+    "PreprocessAgent.estimateComplexity": {
+      "signature": "estimateComplexity(query, context = {})",
+      "role": "internal",
+      "file": "lib\\mcp\\preprocess-agent.cjs"
+    },
+    "PreprocessAgent.clean": {
+      "signature": "clean(query)",
+      "role": "internal",
+      "file": "lib\\mcp\\preprocess-agent.cjs"
+    },
+    "PreprocessAgent.normalizeTerms": {
+      "signature": "normalizeTerms(query)",
+      "role": "internal",
+      "file": "lib\\mcp\\preprocess-agent.cjs"
+    },
+    "PreprocessAgent.detectIntent": {
+      "signature": "detectIntent(query)",
+      "role": "internal",
+      "file": "lib\\mcp\\preprocess-agent.cjs"
+    },
+    "PreprocessAgent.extractDomainTerms": {
+      "signature": "extractDomainTerms(query)",
+      "role": "internal",
+      "file": "lib\\mcp\\preprocess-agent.cjs"
+    },
+    "PreprocessAgent.enrich": {
+      "signature": "enrich(query, context, intent)",
+      "role": "internal",
+      "file": "lib\\mcp\\preprocess-agent.cjs"
+    },
+    "PreprocessAgent.generateSystemPrompt": {
+      "signature": "generateSystemPrompt(context = {})",
+      "role": "internal",
+      "file": "lib\\mcp\\preprocess-agent.cjs"
+    },
+    "PreprocessAgent.estimateTokens": {
+      "signature": "estimateTokens(text)",
+      "role": "internal",
+      "file": "lib\\mcp\\preprocess-agent.cjs"
+    },
+    "deepMerge": {
+      "signature": "deepMerge(target, source)",
+      "role": "internal",
+      "file": "lib\\utils\\config-loader.cjs"
+    },
+    "detectSourcePath": {
+      "signature": "detectSourcePath(projectRoot)",
+      "role": "internal",
+      "file": "lib\\utils\\config-loader.cjs"
+    },
+    "loadProjectConfig": {
+      "signature": "loadProjectConfig(projectRoot = process.cwd())",
+      "role": "internal",
+      "file": "lib\\utils\\config-loader.cjs"
+    },
+    "loadModuleConfig": {
+      "signature": "loadModuleConfig()",
+      "role": "internal",
+      "file": "lib\\utils\\config-loader.cjs"
+    },
+    "section": {
+      "signature": "section(title)",
+      "role": "internal",
+      "file": "lib\\utils\\logger.cjs"
+    },
+    "list": {
+      "signature": "list(items)",
+      "role": "internal",
+      "file": "lib\\utils\\logger.cjs"
+    },
+    "walk": {
+      "signature": "walk(node, visitor)",
+      "role": "internal",
+      "file": "lib\\atlas-generator.cjs"
+    },
+    "parseContent": {
+      "signature": "parseContent(content, filePath)",
+      "role": "internal",
+      "file": "lib\\atlas-generator.cjs"
+    },
+    "Atlas.fromMethodIndex": {
+      "signature": "fromMethodIndex(methodIndex)",
+      "role": "internal",
+      "file": "lib\\atlas.cjs"
+    },
+    "Atlas.fromCallGraph": {
+      "signature": "fromCallGraph(callGraph)",
+      "role": "internal",
+      "file": "lib\\atlas.cjs"
+    },
+    "Atlas.fromFileIndex": {
+      "signature": "fromFileIndex(fileIndex)",
+      "role": "internal",
+      "file": "lib\\atlas.cjs"
+    },
+    "Atlas.toJSON": {
+      "signature": "toJSON()",
+      "role": "internal",
+      "file": "lib\\atlas.cjs"
+    },
+    "extractEdges": {
+      "signature": "extractEdges(ast, knownClasses)",
+      "role": "internal",
+      "file": "lib\\call-graph.cjs"
+    },
+    "buildCallGraph": {
+      "signature": "buildCallGraph(srcPath, knownClasses)",
+      "role": "internal",
+      "file": "lib\\call-graph.cjs"
+    },
+    "ContextAgent.init": {
+      "signature": "init()",
+      "role": "entry",
+      "file": "lib\\mcp\\context-agent.cjs"
+    },
+    "ContextAgent.isIndexStale": {
+      "signature": "isIndexStale()",
+      "role": "internal",
+      "file": "lib\\mcp\\context-agent.cjs"
+    },
+    "ContextAgent.buildIndex": {
+      "signature": "buildIndex()",
+      "role": "core",
+      "file": "lib\\mcp\\context-agent.cjs"
+    },
+    "ContextAgent.findRelevantMethods": {
+      "signature": "findRelevantMethods(query, options = {})",
+      "role": "service",
+      "file": "lib\\mcp\\context-agent.cjs"
+    },
+    "ContextAgent.searchMethods": {
+      "signature": "searchMethods(criteria = {})",
+      "role": "internal",
+      "file": "lib\\mcp\\context-agent.cjs"
+    },
+    "ContextAgent.createSearchSession": {
+      "signature": "createSearchSession(query, options = {})",
+      "role": "core",
+      "file": "lib\\mcp\\context-agent.cjs"
+    },
+    "ContextAgent.formatProjectContext": {
+      "signature": "formatProjectContext({ conceptMap = null, maxCalleesPerMethod = 5 } = {})",
+      "role": "internal",
+      "file": "lib\\mcp\\context-agent.cjs"
+    },
+    "extractOnly": {
+      "signature": "extractOnly(extractor, query)",
+      "role": "internal",
+      "file": "lib\\mcp\\extract-cli.js"
+    },
+    "LolveMCPServer.log": {
+      "signature": "log(level, message)",
+      "role": "internal",
+      "file": "lib\\mcp\\lolvemcp.js"
+    },
+    "LolveMCPServer.clearModuleCache": {
+      "signature": "clearModuleCache()",
+      "role": "internal",
+      "file": "lib\\mcp\\lolvemcp.js"
+    },
+    "LolveMCPServer.extractMethods": {
+      "signature": "extractMethods(query)",
+      "role": "internal",
+      "file": "lib\\mcp\\lolvemcp.js"
+    },
+    "LolveMCPServer.startWatching": {
+      "signature": "startWatching()",
+      "role": "internal",
+      "file": "lib\\mcp\\lolvemcp.js"
+    },
+    "LolveMCPServer.handleFileChange": {
+      "signature": "handleFileChange()",
+      "role": "internal",
+      "file": "lib\\mcp\\lolvemcp.js"
+    },
+    "LolveMCPServer.start": {
+      "signature": "start()",
+      "role": "internal",
+      "file": "lib\\mcp\\lolvemcp.js"
+    },
+    "LolveMCPServer.setupHandlers": {
+      "signature": "setupHandlers()",
+      "role": "internal",
+      "file": "lib\\mcp\\lolvemcp.js"
+    },
+    "ASTParser.parseFile": {
+      "signature": "parseFile(filePath)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "ASTParser.extractVueScript": {
+      "signature": "extractVueScript(content)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "ASTParser.extractClasses": {
+      "signature": "extractClasses(ast, content)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "ASTParser.extractClassInfo": {
+      "signature": "extractClassInfo(classNode, content, isExported)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "ASTParser.extractMethodInfo": {
+      "signature": "extractMethodInfo(node, content, className)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "ASTParser.paramToString": {
+      "signature": "paramToString(param, content)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "ASTParser.extractJSDoc": {
+      "signature": "extractJSDoc(content, position)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "ASTParser.parseJSDoc": {
+      "signature": "parseJSDoc(jsdocRaw)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "ASTParser.extractFunctions": {
+      "signature": "extractFunctions(ast, content)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "MethodIndexer.loadIndex": {
+      "signature": "loadIndex()",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "MethodIndexer.saveIndex": {
+      "signature": "saveIndex()",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "MethodIndexer.hasFileChanged": {
+      "signature": "hasFileChanged(filePath)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "MethodIndexer.indexAll": {
+      "signature": "indexAll(options = { force: false })",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "MethodIndexer.indexFile": {
+      "signature": "indexFile(filePath)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "MethodIndexer.removeFileFromIndex": {
+      "signature": "removeFileFromIndex(relativePath)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "MethodIndexer.inferRole": {
+      "signature": "inferRole(method)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "MethodIndexer.extractMethodCode": {
+      "signature": "extractMethodCode(methodKey)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "MethodIndexer.searchMethods": {
+      "signature": "searchMethods(criteria = {})",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "MethodIndexer.getStats": {
+      "signature": "getStats()",
+      "role": "service",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "AnnotationCache.load": {
+      "signature": "load()",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "AnnotationCache.save": {
+      "signature": "save()",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "AnnotationCache.get": {
+      "signature": "get(methodKey)",
+      "role": "service",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "AnnotationCache.set": {
+      "signature": "set(methodKey, annotation, bodyHash)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "AnnotationCache.isUpToDate": {
+      "signature": "isUpToDate(methodKey, currentBodyHash)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "AnnotationCache.remove": {
+      "signature": "remove(methodKey)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "AnnotationCache.getStats": {
+      "signature": "getStats()",
+      "role": "service",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "AnnotationCache.mergeWithMethod": {
+      "signature": "mergeWithMethod(methodData, methodKey)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "hashContent": {
+      "signature": "hashContent(content)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "getFileStats": {
+      "signature": "getFileStats(filePath)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "extractCode": {
+      "signature": "extractCode(content, start, end)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "findLeadingCommentsStart": {
+      "signature": "findLeadingCommentsStart(content, nodeStart)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "loadAnnotCache": {
+      "signature": "loadAnnotCache(annotCachePath)",
+      "role": "internal",
+      "file": "lib\\project-diagram.cjs"
+    },
+    "generateDiagram": {
+      "signature": "generateDiagram(projectRoot)",
+      "role": "internal",
+      "file": "lib\\project-diagram.cjs"
+    },
+    "AtlasGenerator.generate": {
+      "signature": "generate()",
+      "role": "internal",
+      "file": "lib\\atlas-generator.cjs"
+    },
+    "AtlasGenerator.buildRepo": {
+      "signature": "buildRepo(atlas)",
+      "role": "core",
+      "file": "lib\\atlas-generator.cjs"
+    },
+    "AtlasGenerator.buildSyms": {
+      "signature": "buildSyms(atlas)",
+      "role": "core",
+      "file": "lib\\atlas-generator.cjs"
+    },
+    "AtlasGenerator.buildCalls": {
+      "signature": "buildCalls(atlas)",
+      "role": "core",
+      "file": "lib\\atlas-generator.cjs"
+    },
+    "AtlasGenerator.buildMods": {
+      "signature": "buildMods(atlas)",
+      "role": "core",
+      "file": "lib\\atlas-generator.cjs"
+    },
+    "AtlasGenerator.scoreNodes": {
+      "signature": "scoreNodes(atlas)",
+      "role": "internal",
+      "file": "lib\\atlas-generator.cjs"
+    },
+    "AtlasGenerator.writeArtifacts": {
+      "signature": "writeArtifacts(atlas)",
+      "role": "internal",
+      "file": "lib\\atlas-generator.cjs"
+    },
+    "repoMapFormatter": {
+      "signature": "repoMapFormatter(atlas)",
+      "role": "internal",
+      "file": "lib\\atlas-formatter.cjs"
+    },
+    "compressedFormatter": {
+      "signature": "compressedFormatter(atlas)",
+      "role": "internal",
+      "file": "lib\\atlas-formatter.cjs"
+    },
+    "dependencyFormatter": {
+      "signature": "dependencyFormatter(atlas)",
+      "role": "internal",
+      "file": "lib\\atlas-formatter.cjs"
+    }
+  },
+  "fns": {
+    "main": {
+      "signature": "main()",
+      "role": "internal",
+      "file": "lib\\setup-claude-hooks.cjs"
+    },
+    "log": {
+      "signature": "log(message, type = 'info')",
+      "role": "internal",
+      "file": "lib\\setup-claude-hooks.cjs"
+    },
+    "runFull": {
+      "signature": "runFull(options = { force: false })",
+      "role": "internal",
+      "file": "lib\\annotation-manager.cjs"
+    },
+    "deepMerge": {
+      "signature": "deepMerge(target, source)",
+      "role": "internal",
+      "file": "lib\\utils\\config-loader.cjs"
+    },
+    "detectSourcePath": {
+      "signature": "detectSourcePath(projectRoot)",
+      "role": "internal",
+      "file": "lib\\utils\\config-loader.cjs"
+    },
+    "loadProjectConfig": {
+      "signature": "loadProjectConfig(projectRoot = process.cwd())",
+      "role": "internal",
+      "file": "lib\\utils\\config-loader.cjs"
+    },
+    "loadModuleConfig": {
+      "signature": "loadModuleConfig()",
+      "role": "internal",
+      "file": "lib\\utils\\config-loader.cjs"
+    },
+    "section": {
+      "signature": "section(title)",
+      "role": "internal",
+      "file": "lib\\utils\\logger.cjs"
+    },
+    "list": {
+      "signature": "list(items)",
+      "role": "internal",
+      "file": "lib\\utils\\logger.cjs"
+    },
+    "walk": {
+      "signature": "walk(node, visitor)",
+      "role": "internal",
+      "file": "lib\\atlas-generator.cjs"
+    },
+    "parseContent": {
+      "signature": "parseContent(content, filePath)",
+      "role": "internal",
+      "file": "lib\\atlas-generator.cjs"
+    },
+    "extractEdges": {
+      "signature": "extractEdges(ast, knownClasses)",
+      "role": "internal",
+      "file": "lib\\call-graph.cjs"
+    },
+    "buildCallGraph": {
+      "signature": "buildCallGraph(srcPath, knownClasses)",
+      "role": "internal",
+      "file": "lib\\call-graph.cjs"
+    },
+    "extractOnly": {
+      "signature": "extractOnly(extractor, query)",
+      "role": "internal",
+      "file": "lib\\mcp\\extract-cli.js"
+    },
+    "hashContent": {
+      "signature": "hashContent(content)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "getFileStats": {
+      "signature": "getFileStats(filePath)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "extractCode": {
+      "signature": "extractCode(content, start, end)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "findLeadingCommentsStart": {
+      "signature": "findLeadingCommentsStart(content, nodeStart)",
+      "role": "internal",
+      "file": "lib\\mcp\\method-indexer.cjs"
+    },
+    "loadAnnotCache": {
+      "signature": "loadAnnotCache(annotCachePath)",
+      "role": "internal",
+      "file": "lib\\project-diagram.cjs"
+    },
+    "generateDiagram": {
+      "signature": "generateDiagram(projectRoot)",
+      "role": "internal",
+      "file": "lib\\project-diagram.cjs"
+    },
+    "repoMapFormatter": {
+      "signature": "repoMapFormatter(atlas)",
+      "role": "internal",
+      "file": "lib\\atlas-formatter.cjs"
+    },
+    "compressedFormatter": {
+      "signature": "compressedFormatter(atlas)",
+      "role": "internal",
+      "file": "lib\\atlas-formatter.cjs"
+    },
+    "dependencyFormatter": {
+      "signature": "dependencyFormatter(atlas)",
+      "role": "internal",
+      "file": "lib\\atlas-formatter.cjs"
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "calls": {},
+  "mods": {
+    "lib/annotation-manager.cjs": [
+      "./mcp/method-indexer.cjs",
+      "./utils/config-loader.cjs",
+      "./utils/file-utils.cjs",
+      "./utils/logger.cjs"
+    ],
+    "lib/atlas-generator.cjs": [
+      "./atlas-formatter.cjs",
+      "./atlas.cjs",
+      "./call-graph.cjs",
+      "./mcp/method-indexer.cjs",
+      "./utils/config-loader.cjs",
+      "./utils/file-utils.cjs",
+      "./utils/logger.cjs"
+    ],
+    "lib/call-graph.cjs": [
+      "./utils/file-utils.cjs",
+      "./utils/logger.cjs"
+    ],
+    "lib/context/file-analyzer.cjs": [
+      "../utils/file-utils.cjs"
+    ],
+    "lib/context/index.cjs": [
+      "./file-analyzer.cjs",
+      "./method-search.cjs",
+      "./search-session.cjs"
+    ],
+    "lib/context/method-search.cjs": [
+      "../utils/logger.cjs"
+    ],
+    "lib/experience-memory.cjs": [
+      "./utils/file-utils.cjs",
+      "./utils/logger.cjs"
+    ],
+    "lib/fingerprint-generator.cjs": [
+      "./utils/logger.cjs"
+    ],
+    "lib/mcp/context-agent.cjs": [
+      "../call-graph.cjs",
+      "../context/file-analyzer.cjs",
+      "../context/method-search.cjs",
+      "../context/search-session.cjs",
+      "../utils/file-utils.cjs",
+      "../utils/logger.cjs",
+      "./method-indexer.cjs"
+    ],
+    "lib/mcp/extract-cli.js": [
+      "./extract-for-claude.cjs",
+      "./method-snapshot.cjs"
+    ],
+    "lib/mcp/extract-for-claude.cjs": [
+      "../utils/config-loader.cjs",
+      "../utils/file-utils.cjs",
+      "../utils/logger.cjs",
+      "./context-agent.cjs",
+      "./method-reinjector.cjs",
+      "./method-snapshot.cjs",
+      "./preprocess-agent.cjs"
+    ],
+    "lib/mcp/lolvemcp.js": [
+      "./extract-for-claude.cjs",
+      "./method-reinjector.cjs",
+      "./method-snapshot.cjs"
+    ],
+    "lib/mcp/method-indexer.cjs": [
+      "../utils/config-loader.cjs",
+      "../utils/file-utils.cjs",
+      "../utils/logger.cjs"
+    ],
+    "lib/mcp/method-reinjector.cjs": [
+      "./method-indexer.cjs",
+      "./method-snapshot.cjs"
+    ],
+    "lib/mcp/method-snapshot.cjs": [
+      "./method-indexer.cjs"
+    ],
+    "lib/mcp/preprocess-agent.cjs": [
+      "../utils/logger.cjs"
+    ]
+  }
+}

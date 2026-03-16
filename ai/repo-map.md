@@ -1,0 +1,35 @@
+REPO MAP
+
+lib/
+  context/
+    file-analyzer.cjs
+    index.cjs
+    method-search.cjs
+    search-session.cjs
+  hooks/
+    pre-bash-hook.cjs
+    pre-edit-hook.cjs
+    pre-read-hook.cjs
+  mcp/
+    context-agent.cjs
+    extract-cli.js
+    extract-for-claude.cjs
+    lolvemcp.js
+    method-indexer.cjs
+    method-reinjector.cjs
+    method-snapshot.cjs
+    preprocess-agent.cjs
+    test-mcp.js
+  utils/
+    config-loader.cjs
+    file-utils.cjs
+    logger.cjs
+  annotation-manager.cjs
+  atlas-formatter.cjs
+  atlas-generator.cjs
+  atlas.cjs
+  call-graph.cjs
+  experience-memory.cjs
+  fingerprint-generator.cjs
+  project-diagram.cjs
+  setup-claude-hooks.cjs
