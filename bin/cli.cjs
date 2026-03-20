@@ -114,9 +114,10 @@ switch (command) {
   case 'roadmap': {
     const issue   = (() => { const i = args.indexOf('--issue');   return i !== -1 ? args[i + 1] : null; })();
     const output  = (() => { const i = args.indexOf('--output');  return i !== -1 ? args[i + 1] : 'both'; })();
+    const noHtml  = args.includes('--no-html');
     const { RoadmapGenerator } = require('../lib/roadmap-generator.cjs');
     const projectRoot = process.env.LC_PROJECT_PATH || process.cwd();
-    const gen = new RoadmapGenerator(projectRoot, { issue, output });
+    const gen = new RoadmapGenerator(projectRoot, { issue, output, html: !noHtml });
     gen.generate().catch(err => {
       console.error('Roadmap generation failed:', err.message);
       process.exit(1);

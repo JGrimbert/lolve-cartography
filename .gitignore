@@ -13,6 +13,10 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
+# Windows reserved device names (équivalent /dev/null)
+/nul
+/NUL
+
 # IDE
 .idea/
 .vscode/
