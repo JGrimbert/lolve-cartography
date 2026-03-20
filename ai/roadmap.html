@@ -1,0 +1,2838 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roadmap · lolve-cartography</title>
+  <style>
+    /* ── Variables lolve ───────────────────────────────── */
+    :root {
+      --stroke-purple-light:        #cdb4f3;
+      --stroke-purple-light-middle: #9b8db2;
+      --stroke-purple-light-trigger:#75518f;
+      --stroke-purple-darker:       #75518f;
+      --lolve-purple:               #d5c2e3;
+      --lolve-purple-dark:          #75518f;
+      --lolve-blue:                 #d1d6f6;
+      --lolve-bright:               #ffe0b2;
+      --lolve-brighter:             #ff8a65;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #242424;
+      color: rgba(255,255,255,0.87);
+      font-family: monospace;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Graph panel ───────────────────────────────────── */
+    #graph-panel {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    #graph-svg {
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+    #graph-svg:active { cursor: grabbing; }
+
+    /* ── orb-lines (DirectRenderer.vue style) ─────────── */
+    .orb-line {
+      stroke: var(--stroke-purple-light);
+      stroke-width: 0.8;
+      fill: none;
+      opacity: 0.35;
+      transition: opacity 0.2s, stroke-width 0.2s;
+    }
+    .orb-line.highlight {
+      opacity: 0.9;
+      stroke-width: 1.5;
+    }
+    .orb-line.dim { opacity: 0.05; }
+
+    /* ── Vertex circles ────────────────────────────────── */
+    .vertex { cursor: pointer; }
+    .vertex .vertex-circle {
+      transition: stroke-width 0.15s, filter 0.15s;
+    }
+    .vertex:hover .vertex-circle,
+    .vertex.active .vertex-circle {
+      stroke-width: 2.2;
+      filter: url(#glow);
+    }
+    .vertex .halo { transition: opacity 0.15s; }
+    .vertex:hover .halo,
+    .vertex.active .halo { opacity: 0.2; }
+
+    /* ── Header ────────────────────────────────────────── */
+    #header {
+      position: absolute;
+      top: 16px; left: 16px;
+      pointer-events: none;
+    }
+    #header h1 {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--lolve-purple);
+      letter-spacing: 0.08em;
+    }
+    #header .meta {
+      font-size: 9px;
+      color: var(--stroke-purple-light-middle);
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    /* ── Stats pill ────────────────────────────────────── */
+    #stats-bar {
+      position: absolute;
+      bottom: 16px; left: 16px;
+      display: flex; gap: 12px;
+      pointer-events: none;
+    }
+    .stat-pill {
+      font-size: 9px;
+      color: var(--stroke-purple-light-middle);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    /* ── Skill legend ──────────────────────────────────── */
+    #legend {
+      position: absolute;
+      bottom: 16px; right: 16px;
+      display: flex; flex-direction: column; gap: 4px;
+      pointer-events: none;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 9px; color: rgba(255,255,255,0.5);
+    }
+    .legend-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Sidebar ───────────────────────────────────────── */
+    #sidebar {
+      width: 280px;
+      background: rgba(255,255,255,0.02);
+      border-left: 1px solid rgba(255,255,255,0.06);
+      overflow-y: auto;
+      padding: 16px 0;
+      flex-shrink: 0;
+    }
+    #sidebar-title {
+      font-size: 10px;
+      color: var(--stroke-purple-light-middle);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0 16px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      margin-bottom: 8px;
+    }
+    .step-card {
+      padding: 10px 16px;
+      border-left: 2px solid transparent;
+      transition: background 0.15s, border-color 0.15s;
+      cursor: pointer;
+    }
+    .step-card:hover,
+    .step-card.active {
+      background: rgba(255,255,255,0.04);
+      border-left-color: var(--step-color);
+    }
+    .step-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+    }
+    .step-num-badge {
+      font-size: 9px;
+      color: var(--step-color);
+      background: rgba(255,255,255,0.05);
+      border-radius: 3px;
+      padding: 1px 5px;
+      flex-shrink: 0;
+    }
+    .step-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.87);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .step-rationale {
+      font-size: 9px;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 4px;
+    }
+    .dep-list {
+      font-size: 9px;
+      color: var(--stroke-purple-light);
+      margin-bottom: 4px;
+    }
+    .dep-list.no-dep { color: rgba(255,255,255,0.2); }
+    .step-nodes { display: none; }
+    .step-card.active .step-nodes { display: block; }
+    .node-item {
+      font-size: 8px;
+      color: rgba(255,255,255,0.45);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .step-files { margin-top: 4px; }
+    .file-item {
+      font-size: 8px;
+      color: var(--stroke-purple-light-middle);
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+
+<div id="graph-panel">
+  <svg id="graph-svg" xmlns="http://www.w3.org/2000/svg">
+    <g id="zoom-group">
+      
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10"
+            refX="9" refY="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="#cdb4f3" opacity="0.7"/>
+    </marker>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="vertexGrad" cx="35%" cy="35%">
+      <stop offset="0%"   stop-color="rgba(255,255,255,0.15)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.0)"/>
+    </radialGradient>
+  </defs>
+
+      <!-- Grille de niveaux -->
+      <g class="level-lines"><line x1="0" y1="80" x2="7040" y2="80"
+      stroke="#75518f" stroke-width="0.3" opacity="0.2" stroke-dasharray="4,8"/>
+    <text x="8" y="74" font-size="9" fill="#9b8db2" opacity="0.5"
+          font-family="monospace">L0</text>
+<line x1="0" y1="250" x2="7040" y2="250"
+      stroke="#75518f" stroke-width="0.3" opacity="0.2" stroke-dasharray="4,8"/>
+    <text x="8" y="244" font-size="9" fill="#9b8db2" opacity="0.5"
+          font-family="monospace">L1</text></g>
+
+      <!-- Orb-lines (dépendances) -->
+      <g class="orb-lines"><path class="orb-line"
+        data-from="4" data-to="39"
+        d="M 640 102 C 640 165, 653.3333333333334 165, 653.3333333333334 228" marker-end="url(#arrow)"/>
+<path class="orb-line"
+        data-from="14" data-to="39"
+        d="M 2240 102 C 2240 165, 653.3333333333334 165, 653.3333333333334 228" marker-end="url(#arrow)"/>
+<path class="orb-line"
+        data-from="16" data-to="39"
+        d="M 2560 102 C 2560 165, 653.3333333333334 165, 653.3333333333334 228" marker-end="url(#arrow)"/>
+<path class="orb-line"
+        data-from="8" data-to="41"
+        d="M 1280 102 C 1280 165, 1800 165, 1800 228" marker-end="url(#arrow)"/>
+<path class="orb-line"
+        data-from="14" data-to="41"
+        d="M 2240 102 C 2240 165, 1800 165, 1800 228" marker-end="url(#arrow)"/>
+<path class="orb-line"
+        data-from="16" data-to="41"
+        d="M 2560 102 C 2560 165, 1800 165, 1800 228" marker-end="url(#arrow)"/>
+<path class="orb-line"
+        data-from="13" data-to="43"
+        d="M 2080 102 C 2080 165, 2946.666666666667 165, 2946.666666666667 228" marker-end="url(#arrow)"/>
+<path class="orb-line"
+        data-from="13" data-to="46"
+        d="M 2080 102 C 2080 165, 4093.3333333333335 165, 4093.3333333333335 228" marker-end="url(#arrow)"/>
+<path class="orb-line"
+        data-from="20" data-to="47"
+        d="M 3200 102 C 3200 165, 5240 165, 5240 228" marker-end="url(#arrow)"/>
+<path class="orb-line"
+        data-from="5" data-to="48"
+        d="M 800 102 C 800 165, 6386.666666666667 165, 6386.666666666667 228" marker-end="url(#arrow)"/>
+<path class="orb-line"
+        data-from="15" data-to="48"
+        d="M 2400 102 C 2400 165, 6386.666666666667 165, 6386.666666666667 228" marker-end="url(#arrow)"/>
+<path class="orb-line"
+        data-from="17" data-to="48"
+        d="M 2720 102 C 2720 165, 6386.666666666667 165, 6386.666666666667 228" marker-end="url(#arrow)"/></g>
+
+      <!-- Vertex circles -->
+      <g class="vertices">
+  <g class="vertex" data-id="1" data-skill="internal"
+     transform="translate(160,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      1
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: ASTParser
+
+Nodes:
+ASTParser
+ASTParser.extractClassInfo
+ASTParser.extractClasses
++2 more
+
+Files:
+lib\mcp\method-indexer.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="2" data-skill="internal"
+     transform="translate(320,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      2
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: ASTParser
+
+Nodes:
+ASTParser.extractMethodInfo
+ASTParser.extractVueScript
+ASTParser.paramToString
++2 more
+
+Files:
+lib\mcp\method-indexer.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="3" data-skill="internal"
+     transform="translate(480,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      3
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: AnnotationCache
+
+Nodes:
+AnnotationCache
+AnnotationCache.isUpToDate
+AnnotationCache.load
++2 more
+
+Files:
+lib\mcp\method-indexer.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="4" data-skill="internal"
+     transform="translate(640,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      4
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Atlas
+
+Nodes:
+Atlas
+Atlas.fromCallGraph
+Atlas.fromFileIndex
++2 more
+
+Files:
+lib\atlas.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="5" data-skill="internal"
+     transform="translate(800,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      5
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+AtlasGenerator
+AtlasGenerator.scoreNodes
+AtlasGenerator.writeArtifacts
++2 more
+
+Files:
+lib\atlas-generator.cjs
+lib\annotation-manager.cjs
+lib\mcp\context-agent.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="6" data-skill="internal"
+     transform="translate(960,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      6
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+ContextAgent.isIndexStale
+ContextAgent.searchMethods
+EffectAnalyzer
++2 more
+
+Files:
+lib\mcp\context-agent.cjs
+lib\annotation-manager.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="7" data-skill="internal"
+     transform="translate(1120,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      7
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: ExperienceMemory
+
+Nodes:
+ExperienceMemory
+ExperienceMemory.addLesson
+ExperienceMemory.categorizeError
++2 more
+
+Files:
+lib\experience-memory.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="8" data-skill="internal"
+     transform="translate(1280,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      8
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+ExperienceMemory.markSuccess
+ExperienceMemory.recordModifications
+ExperienceMemory.save
++2 more
+
+Files:
+lib\experience-memory.cjs
+lib\mcp\extract-for-claude.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="9" data-skill="internal"
+     transform="translate(1440,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      9
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+ExtractForClaude.displaySummary
+ExtractForClaude.generateClaudeCodeCommand
+ExtractForClaude.showHelp
++2 more
+
+Files:
+lib\mcp\extract-for-claude.cjs
+lib\context\file-analyzer.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="10" data-skill="internal"
+     transform="translate(1600,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      10
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: FileAnalyzer
+
+Nodes:
+FileAnalyzer.analyzeFile
+FileAnalyzer.detectCategory
+FileAnalyzer.extractJSDoc
++2 more
+
+Files:
+lib\context\file-analyzer.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="11" data-skill="internal"
+     transform="translate(1760,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      11
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: FingerprintGenerator
+
+Nodes:
+FingerprintGenerator
+FingerprintGenerator.detectEffects
+FingerprintGenerator.detectErrorType
++2 more
+
+Files:
+lib\fingerprint-generator.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="12" data-skill="internal"
+     transform="translate(1920,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      12
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+FingerprintGenerator.generate
+FingerprintGenerator.toCanonicalString
+LolveMCPServer
++2 more
+
+Files:
+lib\fingerprint-generator.cjs
+lib\mcp\lolvemcp.js</title>
+  </g>
+
+  <g class="vertex" data-id="13" data-skill="internal"
+     transform="translate(2080,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      13
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: MethodIndexer
+
+Nodes:
+MethodIndexer
+MethodIndexer.extractMethodCode
+MethodIndexer.hasFileChanged
++2 more
+
+Files:
+lib\mcp\method-indexer.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="14" data-skill="internal"
+     transform="translate(2240,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      14
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+MethodIndexer.removeFileFromIndex
+MethodIndexer.searchMethods
+MethodReinjector
++2 more
+
+Files:
+lib\mcp\method-indexer.cjs
+lib\mcp\method-reinjector.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="15" data-skill="internal"
+     transform="translate(2400,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      15
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+MethodReinjector.levenshtein
+MethodReinjector.parseAsJavaScript
+MethodReinjector.parseModifiedFile
++2 more
+
+Files:
+lib\mcp\method-reinjector.cjs
+lib\context\method-search.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="16" data-skill="internal"
+     transform="translate(2560,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      16
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+MethodSearch.searchMethods
+MethodSnapshot
+MethodSnapshot.checkFileIntegrity
++2 more
+
+Files:
+lib\context\method-search.cjs
+lib\mcp\method-snapshot.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="17" data-skill="internal"
+     transform="translate(2720,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      17
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+MethodSnapshot.load
+MethodSnapshot.normalizeCode
+MethodSnapshot.save
++2 more
+
+Files:
+lib\mcp\method-snapshot.cjs
+lib\mcp\preprocess-agent.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="18" data-skill="internal"
+     transform="translate(2880,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      18
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: PreprocessAgent
+
+Nodes:
+PreprocessAgent.detectIntent
+PreprocessAgent.enrich
+PreprocessAgent.estimateComplexity
++2 more
+
+Files:
+lib\mcp\preprocess-agent.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="19" data-skill="internal"
+     transform="translate(3040,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      19
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+PreprocessAgent.generateSystemPrompt
+PreprocessAgent.process
+RiskInferenceEngine
++2 more
+
+Files:
+lib\mcp\preprocess-agent.cjs
+lib\experience-memory.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="20" data-skill="internal"
+     transform="translate(3200,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      20
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+RiskInferenceEngine.calculateOverallRisk
+RiskInferenceEngine.detectSpecificRisks
+RiskInferenceEngine.formatRiskReport
++2 more
+
+Files:
+lib\experience-memory.cjs
+lib\context\search-session.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="21" data-skill="internal"
+     transform="translate(3360,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      21
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: SearchSession
+
+Nodes:
+SearchSession._findCreatorMethods
+SearchSession._findMethodsOfClass
+SearchSession._search
++2 more
+
+Files:
+lib\context\search-session.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="22" data-skill="internal"
+     transform="translate(3520,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      22
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: SearchSession
+
+Nodes:
+SearchSession.count
+SearchSession.exclude
+SearchSession.history
++2 more
+
+Files:
+lib\context\search-session.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="23" data-skill="internal"
+     transform="translate(3680,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      23
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: SearchSession
+
+Nodes:
+SearchSession.loadFile
+SearchSession.resetExclusions
+SearchSession.results
++2 more
+
+Files:
+lib\context\search-session.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="24" data-skill="internal"
+     transform="translate(3840,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      24
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+SearchSession.toContext
+SearchSession.toPrompt
+SourceParser
++2 more
+
+Files:
+lib\context\search-session.cjs
+lib\annotation-manager.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="25" data-skill="internal"
+     transform="translate(4000,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      25
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: SourceParser
+
+Nodes:
+SourceParser.extractClasses
+SourceParser.extractImports
+SourceParser.extractMethods
++2 more
+
+Files:
+lib\annotation-manager.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="26" data-skill="internal"
+     transform="translate(4160,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      26
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+SourceParser.parseJSDoc
+SuggestionGenerator
+SuggestionGenerator.calculateConfidence
++2 more
+
+Files:
+lib\annotation-manager.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="27" data-skill="internal"
+     transform="translate(4320,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      27
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+SuggestionGenerator.suggestClassRole
+SuggestionGenerator.suggestMethodRole
+TFIDFEmbedding
++2 more
+
+Files:
+lib\annotation-manager.cjs
+lib\experience-memory.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="28" data-skill="internal"
+     transform="translate(4480,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      28
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+buildCallGraph
+compressedFormatter
+deepMerge
++2 more
+
+Files:
+lib\call-graph.cjs
+lib\atlas-formatter.cjs
+lib\utils\config-loader.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="29" data-skill="internal"
+     transform="translate(4640,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      29
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+extractCode
+extractEdges
+extractOnly
++2 more
+
+Files:
+lib\mcp\method-indexer.cjs
+lib\call-graph.cjs
+lib\mcp\extract-cli.js
+lib\project-diagram.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="30" data-skill="internal"
+     transform="translate(4800,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      30
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+getFileStats
+hashContent
+list
++2 more
+
+Files:
+lib\mcp\method-indexer.cjs
+lib\utils\logger.cjs
+lib\project-diagram.cjs
+lib\utils\config-loader.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="31" data-skill="internal"
+     transform="translate(4960,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      31
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (5 nodes)
+
+Nodes:
+loadProjectConfig
+log
+main
++2 more
+
+Files:
+lib\utils\config-loader.cjs
+lib\setup-claude-hooks.cjs
+lib\atlas-generator.cjs
+lib\atlas-formatter.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="32" data-skill="internal"
+     transform="translate(5120,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      32
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 1 (3 nodes)
+
+Nodes:
+runFull
+section
+walk
+
+Files:
+lib\annotation-manager.cjs
+lib\utils\logger.cjs
+lib\atlas-generator.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="33" data-skill="api"
+     transform="translate(5280,80)">
+    <!-- Halo -->
+    <circle r="30" fill="#d1d6f6" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="#d1d6f6"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="#d1d6f6" font-weight="600" class="step-num">
+      33
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="#d1d6f6" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Service: Level 1 (5 nodes)
+
+Nodes:
+AnnotationCache.get
+AnnotationCache.getStats
+ConsumerAnalyzer.getConsumers
++2 more
+
+Files:
+lib\mcp\method-indexer.cjs
+lib\annotation-manager.cjs
+lib\mcp\context-agent.cjs
+lib\experience-memory.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="34" data-skill="api"
+     transform="translate(5440,80)">
+    <!-- Halo -->
+    <circle r="30" fill="#d1d6f6" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="#d1d6f6"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="#d1d6f6" font-weight="600" class="step-num">
+      34
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="#d1d6f6" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Service: ExperienceMemory
+
+Nodes:
+ExperienceMemory.getCurrentEvent
+ExperienceMemory.getEvent
+ExperienceMemory.getPatternSignature
++2 more
+
+Files:
+lib\experience-memory.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="35" data-skill="api"
+     transform="translate(5600,80)">
+    <!-- Halo -->
+    <circle r="30" fill="#d1d6f6" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="#d1d6f6"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="#d1d6f6" font-weight="600" class="step-num">
+      35
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="#d1d6f6" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Service: Level 1 (5 nodes)
+
+Nodes:
+ExperienceMemory.updatePatterns
+FingerprintGenerator.getPatternSignature
+MethodIndexer.getStats
++2 more
+
+Files:
+lib\experience-memory.cjs
+lib\fingerprint-generator.cjs
+lib\mcp\method-indexer.cjs
+lib\mcp\method-reinjector.cjs
+lib\context\method-search.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="36" data-skill="api"
+     transform="translate(5760,80)">
+    <!-- Halo -->
+    <circle r="30" fill="#d1d6f6" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="#d1d6f6"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="#d1d6f6" font-weight="600" class="step-num">
+      36
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="#d1d6f6" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Service: SearchSession.getAtLevel
+
+Nodes:
+SearchSession.getAtLevel
+
+Files:
+lib\context\search-session.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="37" data-skill="domain"
+     transform="translate(5920,80)">
+    <!-- Halo -->
+    <circle r="30" fill="#d5c2e3" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="#d5c2e3"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="#d5c2e3" font-weight="600" class="step-num">
+      37
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="#d5c2e3" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Core: Level 1 (2 nodes)
+
+Nodes:
+ContextAgent.buildIndex
+RiskInferenceEngine.createWarningFromFailure
+
+Files:
+lib\mcp\context-agent.cjs
+lib\experience-memory.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="38" data-skill="entrypoint"
+     transform="translate(6080,80)">
+    <!-- Halo -->
+    <circle r="30" fill="#ff8a65" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="#ff8a65"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="#ff8a65" font-weight="600" class="step-num">
+      38
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="#ff8a65" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Entry: Level 1 (2 nodes)
+
+Nodes:
+ExperienceMemory.init
+PreprocessAgent.init
+
+Files:
+lib\experience-memory.cjs
+lib\mcp\preprocess-agent.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="39" data-skill="internal"
+     transform="translate(653.3333333333334,250)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      39
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 2 (5 nodes)
+
+Nodes:
+AnnotationCache.save
+AnnotationCache.set
+AtlasGenerator.generate
++2 more
+
+Files:
+lib\mcp\method-indexer.cjs
+lib\atlas-generator.cjs
+lib\mcp\context-agent.cjs
+lib\mcp\extract-for-claude.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="40" data-skill="internal"
+     transform="translate(6240,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      40
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 2 (5 nodes)
+
+Nodes:
+ExtractForClaude.waitForUserValidation
+FileAnalyzer.extractDependencies
+FileAnalyzer.extractExports
++2 more
+
+Files:
+lib\mcp\extract-for-claude.cjs
+lib\context\file-analyzer.cjs
+lib\fingerprint-generator.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="41" data-skill="internal"
+     transform="translate(1800,250)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      41
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 2 (5 nodes)
+
+Nodes:
+FingerprintGenerator.extractKeywords
+FingerprintGenerator.extractRoles
+LolveMCPServer.extractMethods
++2 more
+
+Files:
+lib\fingerprint-generator.cjs
+lib\mcp\lolvemcp.js</title>
+  </g>
+
+  <g class="vertex" data-id="42" data-skill="internal"
+     transform="translate(6400,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      42
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 2 (5 nodes)
+
+Nodes:
+LolveMCPServer.setupHandlers
+LolveMCPServer.start
+MethodIndexer.indexAll
++2 more
+
+Files:
+lib\mcp\lolvemcp.js
+lib\mcp\method-indexer.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="43" data-skill="internal"
+     transform="translate(2946.666666666667,250)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      43
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 2 (5 nodes)
+
+Nodes:
+MethodReinjector.reinject
+MethodSearch._doSearch
+MethodSnapshot.capture
++2 more
+
+Files:
+lib\mcp\method-reinjector.cjs
+lib\context\method-search.cjs
+lib\mcp\method-snapshot.cjs
+lib\mcp\preprocess-agent.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="44" data-skill="internal"
+     transform="translate(6560,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      44
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: Level 2 (5 nodes)
+
+Nodes:
+PreprocessAgent.normalizeTerms
+SearchSession.expand
+SourceParser.extractExports
++2 more
+
+Files:
+lib\mcp\preprocess-agent.cjs
+lib\context\search-session.cjs
+lib\annotation-manager.cjs
+lib\experience-memory.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="45" data-skill="internal"
+     transform="translate(6720,80)">
+    <!-- Halo -->
+    <circle r="30" fill="rgba(255,255,255,0.25)" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="rgba(255,255,255,0.25)"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="rgba(255,255,255,0.25)" font-weight="600" class="step-num">
+      45
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="rgba(255,255,255,0.25)" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Internal: TFIDFEmbedding.embed
+
+Nodes:
+TFIDFEmbedding.embed
+
+Files:
+lib\experience-memory.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="46" data-skill="domain"
+     transform="translate(4093.3333333333335,250)">
+    <!-- Halo -->
+    <circle r="30" fill="#d5c2e3" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="#d5c2e3"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="#d5c2e3" font-weight="600" class="step-num">
+      46
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="#d5c2e3" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Core: Level 2 (5 nodes)
+
+Nodes:
+AtlasGenerator.buildCalls
+AtlasGenerator.buildMods
+AtlasGenerator.buildRepo
++2 more
+
+Files:
+lib\atlas-generator.cjs
+lib\annotation-manager.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="47" data-skill="domain"
+     transform="translate(5240,250)">
+    <!-- Halo -->
+    <circle r="30" fill="#d5c2e3" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="#d5c2e3"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="#d5c2e3" font-weight="600" class="step-num">
+      47
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="#d5c2e3" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Core: Level 2 (2 nodes)
+
+Nodes:
+ContextAgent.createSearchSession
+ExperienceMemory.createEvent
+
+Files:
+lib\mcp\context-agent.cjs
+lib\experience-memory.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="48" data-skill="entrypoint"
+     transform="translate(6386.666666666667,250)">
+    <!-- Halo -->
+    <circle r="30" fill="#ff8a65" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="#ff8a65"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="#ff8a65" font-weight="600" class="step-num">
+      48
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="#ff8a65" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Entry: Level 2 (2 nodes)
+
+Nodes:
+ContextAgent.init
+ExtractForClaude.init
+
+Files:
+lib\mcp\context-agent.cjs
+lib\mcp\extract-for-claude.cjs</title>
+  </g>
+
+  <g class="vertex" data-id="49" data-skill="api"
+     transform="translate(6880,80)">
+    <!-- Halo -->
+    <circle r="30" fill="#d1d6f6" opacity="0.06" class="halo"/>
+    <!-- Orb circle (lolve style) -->
+    <circle r="22" fill="#242424" stroke="#d1d6f6"
+            stroke-width="1.2" class="vertex-circle"/>
+    <!-- Gradient overlay -->
+    <circle r="22" fill="url(#vertexGrad)"/>
+    <!-- Step number -->
+    <text y="1" text-anchor="middle" dominant-baseline="middle"
+          font-size="11" fill="#d1d6f6" font-weight="600" class="step-num">
+      49
+    </text>
+    <!-- Skill dot -->
+    <circle cx="16" cy="-16" r="3"
+            fill="#d1d6f6" opacity="0.9"/>
+    <!-- Tooltip data (hidden) -->
+    <title>Service: Level 2 (3 nodes)
+
+Nodes:
+MethodReinjector.findInsertionPoint
+SearchSession.getAllLoadedCode
+SearchSession.getAllLoadedFiles
+
+Files:
+lib\mcp\method-reinjector.cjs
+lib\context\search-session.cjs</title>
+  </g></g>
+
+      <!-- Labels -->
+      <g class="labels">
+  <g transform="translate(160,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">ASTParser</text>
+  </g>
+
+  <g transform="translate(320,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">ASTParser</text>
+  </g>
+
+  <g transform="translate(480,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">AnnotationCache</text>
+  </g>
+
+  <g transform="translate(640,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Atlas</text>
+  </g>
+
+  <g transform="translate(800,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(960,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(1120,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">ExperienceMemory</text>
+  </g>
+
+  <g transform="translate(1280,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(1440,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(1600,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">FileAnalyzer</text>
+  </g>
+
+  <g transform="translate(1760,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">FingerprintGenerator</text>
+  </g>
+
+  <g transform="translate(1920,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(2080,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">MethodIndexer</text>
+  </g>
+
+  <g transform="translate(2240,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(2400,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(2560,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(2720,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(2880,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">PreprocessAgent</text>
+  </g>
+
+  <g transform="translate(3040,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(3200,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(3360,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">SearchSession</text>
+  </g>
+
+  <g transform="translate(3520,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">SearchSession</text>
+  </g>
+
+  <g transform="translate(3680,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">SearchSession</text>
+  </g>
+
+  <g transform="translate(3840,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(4000,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">SourceParser</text>
+  </g>
+
+  <g transform="translate(4160,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(4320,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(4480,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(4640,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(4800,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(4960,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(5120,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (3 nodes)</text>
+  </g>
+
+  <g transform="translate(5280,118)">
+    <text text-anchor="middle" font-size="9" fill="#d1d6f6" opacity="0.7"
+          font-family="monospace">Service</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(5440,118)">
+    <text text-anchor="middle" font-size="9" fill="#d1d6f6" opacity="0.7"
+          font-family="monospace">Service</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">ExperienceMemory</text>
+  </g>
+
+  <g transform="translate(5600,118)">
+    <text text-anchor="middle" font-size="9" fill="#d1d6f6" opacity="0.7"
+          font-family="monospace">Service</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(5760,118)">
+    <text text-anchor="middle" font-size="9" fill="#d1d6f6" opacity="0.7"
+          font-family="monospace">Service</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">SearchSession.getAtL</text>
+  </g>
+
+  <g transform="translate(5920,118)">
+    <text text-anchor="middle" font-size="9" fill="#d5c2e3" opacity="0.7"
+          font-family="monospace">Core</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (2 nodes)</text>
+  </g>
+
+  <g transform="translate(6080,118)">
+    <text text-anchor="middle" font-size="9" fill="#ff8a65" opacity="0.7"
+          font-family="monospace">Entry</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 1 (2 nodes)</text>
+  </g>
+
+  <g transform="translate(653.3333333333334,288)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 2 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(6240,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 2 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(1800,288)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 2 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(6400,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 2 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(2946.666666666667,288)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 2 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(6560,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 2 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(6720,118)">
+    <text text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" opacity="0.7"
+          font-family="monospace">Internal</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">TFIDFEmbedding.embed</text>
+  </g>
+
+  <g transform="translate(4093.3333333333335,288)">
+    <text text-anchor="middle" font-size="9" fill="#d5c2e3" opacity="0.7"
+          font-family="monospace">Core</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 2 (5 nodes)</text>
+  </g>
+
+  <g transform="translate(5240,288)">
+    <text text-anchor="middle" font-size="9" fill="#d5c2e3" opacity="0.7"
+          font-family="monospace">Core</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 2 (2 nodes)</text>
+  </g>
+
+  <g transform="translate(6386.666666666667,288)">
+    <text text-anchor="middle" font-size="9" fill="#ff8a65" opacity="0.7"
+          font-family="monospace">Entry</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 2 (2 nodes)</text>
+  </g>
+
+  <g transform="translate(6880,118)">
+    <text text-anchor="middle" font-size="9" fill="#d1d6f6" opacity="0.7"
+          font-family="monospace">Service</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.87)" opacity="0.5"
+          font-family="monospace">Level 2 (3 nodes)</text>
+  </g></g>
+    </g>
+  </svg>
+
+  <!-- Header -->
+  <div id="header">
+    <h1>◉ lolve-cartography</h1>
+    <div class="meta">
+      2026-03-16 21:16
+      
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div id="stats-bar">
+    <div class="stat-pill">221 nodes</div>
+    <div class="stat-pill">12 edges</div>
+    <div class="stat-pill">2 levels</div>
+    <div class="stat-pill">49 steps</div>
+  </div>
+
+  <!-- Legend -->
+  <div id="legend">
+    <div class="legend-item">
+        <div class="legend-dot" style="background:#d5c2e3"></div>
+        <span>Core</span>
+      </div><div class="legend-item">
+        <div class="legend-dot" style="background:#ff8a65"></div>
+        <span>Entry</span>
+      </div><div class="legend-item">
+        <div class="legend-dot" style="background:#d1d6f6"></div>
+        <span>Service</span>
+      </div><div class="legend-item">
+        <div class="legend-dot" style="background:#f48fb1"></div>
+        <span>Integration</span>
+      </div><div class="legend-item">
+        <div class="legend-dot" style="background:#ffeccf"></div>
+        <span>Flow</span>
+      </div><div class="legend-item">
+        <div class="legend-dot" style="background:#9b8db2"></div>
+        <span>Utility</span>
+      </div><div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,255,255,0.25)"></div>
+        <span>Internal</span>
+      </div>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <div id="sidebar-title">Steps · 49</div>
+  
+  <div class="step-card" data-id="1" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">1</span>
+      <span class="step-label">Internal: ASTParser</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• ASTParser</div><div class="node-item">• ASTParser.extractClassInfo</div><div class="node-item">• ASTParser.extractClasses</div><div class="node-item">• ASTParser.extractFunctions</div><div class="node-item">• ASTParser.extractJSDoc</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-indexer.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="2" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">2</span>
+      <span class="step-label">Internal: ASTParser</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• ASTParser.extractMethodInfo</div><div class="node-item">• ASTParser.extractVueScript</div><div class="node-item">• ASTParser.paramToString</div><div class="node-item">• ASTParser.parseFile</div><div class="node-item">• ASTParser.parseJSDoc</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-indexer.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="3" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">3</span>
+      <span class="step-label">Internal: AnnotationCache</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• AnnotationCache</div><div class="node-item">• AnnotationCache.isUpToDate</div><div class="node-item">• AnnotationCache.load</div><div class="node-item">• AnnotationCache.mergeWithMethod</div><div class="node-item">• AnnotationCache.remove</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-indexer.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="4" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">4</span>
+      <span class="step-label">Internal: Atlas</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• Atlas</div><div class="node-item">• Atlas.fromCallGraph</div><div class="node-item">• Atlas.fromFileIndex</div><div class="node-item">• Atlas.fromMethodIndex</div><div class="node-item">• Atlas.toJSON</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\atlas.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="5" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">5</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• AtlasGenerator</div><div class="node-item">• AtlasGenerator.scoreNodes</div><div class="node-item">• AtlasGenerator.writeArtifacts</div><div class="node-item">• ConsumerAnalyzer</div><div class="node-item">• ContextAgent</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\atlas-generator.cjs</div><div class="file-item">↳ lib\annotation-manager.cjs</div><div class="file-item">↳ lib\mcp\context-agent.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="6" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">6</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• ContextAgent.isIndexStale</div><div class="node-item">• ContextAgent.searchMethods</div><div class="node-item">• EffectAnalyzer</div><div class="node-item">• EffectAnalyzer.analyzeContext</div><div class="node-item">• EffectAnalyzer.analyzeEffects</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\context-agent.cjs</div><div class="file-item">↳ lib\annotation-manager.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="7" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">7</span>
+      <span class="step-label">Internal: ExperienceMemory</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• ExperienceMemory</div><div class="node-item">• ExperienceMemory.addLesson</div><div class="node-item">• ExperienceMemory.categorizeError</div><div class="node-item">• ExperienceMemory.fingerprintToTerms</div><div class="node-item">• ExperienceMemory.markFailure</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\experience-memory.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="8" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">8</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• ExperienceMemory.markSuccess</div><div class="node-item">• ExperienceMemory.recordModifications</div><div class="node-item">• ExperienceMemory.save</div><div class="node-item">• ExtractForClaude</div><div class="node-item">• ExtractForClaude.displayClaudeCodeInstructions</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\experience-memory.cjs</div><div class="file-item">↳ lib\mcp\extract-for-claude.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="9" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">9</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• ExtractForClaude.displaySummary</div><div class="node-item">• ExtractForClaude.generateClaudeCodeCommand</div><div class="node-item">• ExtractForClaude.showHelp</div><div class="node-item">• ExtractForClaude.wrapText</div><div class="node-item">• FileAnalyzer</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\extract-for-claude.cjs</div><div class="file-item">↳ lib\context\file-analyzer.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="10" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">10</span>
+      <span class="step-label">Internal: FileAnalyzer</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• FileAnalyzer.analyzeFile</div><div class="node-item">• FileAnalyzer.detectCategory</div><div class="node-item">• FileAnalyzer.extractJSDoc</div><div class="node-item">• FileAnalyzer.parseJSDocDescription</div><div class="node-item">• FileAnalyzer.parseJSDocTags</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\context\file-analyzer.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="11" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">11</span>
+      <span class="step-label">Internal: FingerprintGenerator</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• FingerprintGenerator</div><div class="node-item">• FingerprintGenerator.detectEffects</div><div class="node-item">• FingerprintGenerator.detectErrorType</div><div class="node-item">• FingerprintGenerator.detectIntent</div><div class="node-item">• FingerprintGenerator.estimateComplexity</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\fingerprint-generator.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="12" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">12</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• FingerprintGenerator.generate</div><div class="node-item">• FingerprintGenerator.toCanonicalString</div><div class="node-item">• LolveMCPServer</div><div class="node-item">• LolveMCPServer.clearModuleCache</div><div class="node-item">• LolveMCPServer.startWatching</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\fingerprint-generator.cjs</div><div class="file-item">↳ lib\mcp\lolvemcp.js</div></div>
+  </div>
+
+  <div class="step-card" data-id="13" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">13</span>
+      <span class="step-label">Internal: MethodIndexer</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• MethodIndexer</div><div class="node-item">• MethodIndexer.extractMethodCode</div><div class="node-item">• MethodIndexer.hasFileChanged</div><div class="node-item">• MethodIndexer.inferRole</div><div class="node-item">• MethodIndexer.loadIndex</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-indexer.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="14" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">14</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• MethodIndexer.removeFileFromIndex</div><div class="node-item">• MethodIndexer.searchMethods</div><div class="node-item">• MethodReinjector</div><div class="node-item">• MethodReinjector.deleteMethodFromFile</div><div class="node-item">• MethodReinjector.detectChanges</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-indexer.cjs</div><div class="file-item">↳ lib\mcp\method-reinjector.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="15" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">15</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• MethodReinjector.levenshtein</div><div class="node-item">• MethodReinjector.parseAsJavaScript</div><div class="node-item">• MethodReinjector.parseModifiedFile</div><div class="node-item">• MethodReinjector.similarity</div><div class="node-item">• MethodSearch</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-reinjector.cjs</div><div class="file-item">↳ lib\context\method-search.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="16" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">16</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• MethodSearch.searchMethods</div><div class="node-item">• MethodSnapshot</div><div class="node-item">• MethodSnapshot.checkFileIntegrity</div><div class="node-item">• MethodSnapshot.generateTempFile</div><div class="node-item">• MethodSnapshot.hashFile</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\context\method-search.cjs</div><div class="file-item">↳ lib\mcp\method-snapshot.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="17" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">17</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• MethodSnapshot.load</div><div class="node-item">• MethodSnapshot.normalizeCode</div><div class="node-item">• MethodSnapshot.save</div><div class="node-item">• PreprocessAgent</div><div class="node-item">• PreprocessAgent.clean</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-snapshot.cjs</div><div class="file-item">↳ lib\mcp\preprocess-agent.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="18" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">18</span>
+      <span class="step-label">Internal: PreprocessAgent</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• PreprocessAgent.detectIntent</div><div class="node-item">• PreprocessAgent.enrich</div><div class="node-item">• PreprocessAgent.estimateComplexity</div><div class="node-item">• PreprocessAgent.estimateTokens</div><div class="node-item">• PreprocessAgent.extractDomainTerms</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\preprocess-agent.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="19" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">19</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• PreprocessAgent.generateSystemPrompt</div><div class="node-item">• PreprocessAgent.process</div><div class="node-item">• RiskInferenceEngine</div><div class="node-item">• RiskInferenceEngine.analyzePatternRisk</div><div class="node-item">• RiskInferenceEngine.analyzeRisks</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\preprocess-agent.cjs</div><div class="file-item">↳ lib\experience-memory.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="20" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">20</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• RiskInferenceEngine.calculateOverallRisk</div><div class="node-item">• RiskInferenceEngine.detectSpecificRisks</div><div class="node-item">• RiskInferenceEngine.formatRiskReport</div><div class="node-item">• SearchSession</div><div class="node-item">• SearchSession._addHistory</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\experience-memory.cjs</div><div class="file-item">↳ lib\context\search-session.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="21" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">21</span>
+      <span class="step-label">Internal: SearchSession</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• SearchSession._findCreatorMethods</div><div class="node-item">• SearchSession._findMethodsOfClass</div><div class="node-item">• SearchSession._search</div><div class="node-item">• SearchSession.applyAnnotations</div><div class="node-item">• SearchSession.checkAnnotations</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\context\search-session.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="22" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">22</span>
+      <span class="step-label">Internal: SearchSession</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• SearchSession.count</div><div class="node-item">• SearchSession.exclude</div><div class="node-item">• SearchSession.history</div><div class="node-item">• SearchSession.keys</div><div class="node-item">• SearchSession.loadCode</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\context\search-session.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="23" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">23</span>
+      <span class="step-label">Internal: SearchSession</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• SearchSession.loadFile</div><div class="node-item">• SearchSession.resetExclusions</div><div class="node-item">• SearchSession.results</div><div class="node-item">• SearchSession.retry</div><div class="node-item">• SearchSession.summary</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\context\search-session.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="24" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">24</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• SearchSession.toContext</div><div class="node-item">• SearchSession.toPrompt</div><div class="node-item">• SourceParser</div><div class="node-item">• SourceParser.extractArrowBody</div><div class="node-item">• SourceParser.extractBracedBlock</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\context\search-session.cjs</div><div class="file-item">↳ lib\annotation-manager.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="25" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">25</span>
+      <span class="step-label">Internal: SourceParser</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• SourceParser.extractClasses</div><div class="node-item">• SourceParser.extractImports</div><div class="node-item">• SourceParser.extractMethods</div><div class="node-item">• SourceParser.extractStandaloneFunctions</div><div class="node-item">• SourceParser.parseFile</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\annotation-manager.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="26" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">26</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• SourceParser.parseJSDoc</div><div class="node-item">• SuggestionGenerator</div><div class="node-item">• SuggestionGenerator.calculateConfidence</div><div class="node-item">• SuggestionGenerator.generateAll</div><div class="node-item">• SuggestionGenerator.generateForFile</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\annotation-manager.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="27" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">27</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• SuggestionGenerator.suggestClassRole</div><div class="node-item">• SuggestionGenerator.suggestMethodRole</div><div class="node-item">• TFIDFEmbedding</div><div class="node-item">• TFIDFEmbedding.cosineSimilarity</div><div class="node-item">• TFIDFEmbedding.serialize</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\annotation-manager.cjs</div><div class="file-item">↳ lib\experience-memory.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="28" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">28</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• buildCallGraph</div><div class="node-item">• compressedFormatter</div><div class="node-item">• deepMerge</div><div class="node-item">• dependencyFormatter</div><div class="node-item">• detectSourcePath</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\call-graph.cjs</div><div class="file-item">↳ lib\atlas-formatter.cjs</div><div class="file-item">↳ lib\utils\config-loader.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="29" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">29</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• extractCode</div><div class="node-item">• extractEdges</div><div class="node-item">• extractOnly</div><div class="node-item">• findLeadingCommentsStart</div><div class="node-item">• generateDiagram</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-indexer.cjs</div><div class="file-item">↳ lib\call-graph.cjs</div><div class="file-item">↳ lib\mcp\extract-cli.js</div><div class="file-item">↳ lib\project-diagram.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="30" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">30</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• getFileStats</div><div class="node-item">• hashContent</div><div class="node-item">• list</div><div class="node-item">• loadAnnotCache</div><div class="node-item">• loadModuleConfig</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-indexer.cjs</div><div class="file-item">↳ lib\utils\logger.cjs</div><div class="file-item">↳ lib\project-diagram.cjs</div><div class="file-item">↳ lib\utils\config-loader.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="31" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">31</span>
+      <span class="step-label">Internal: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• loadProjectConfig</div><div class="node-item">• log</div><div class="node-item">• main</div><div class="node-item">• parseContent</div><div class="node-item">• repoMapFormatter</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\utils\config-loader.cjs</div><div class="file-item">↳ lib\setup-claude-hooks.cjs</div><div class="file-item">↳ lib\atlas-generator.cjs</div><div class="file-item">↳ lib\atlas-formatter.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="32" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">32</span>
+      <span class="step-label">Internal: Level 1 (3 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• runFull</div><div class="node-item">• section</div><div class="node-item">• walk</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\annotation-manager.cjs</div><div class="file-item">↳ lib\utils\logger.cjs</div><div class="file-item">↳ lib\atlas-generator.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="33" style="--step-color: #d1d6f6">
+    <div class="step-header">
+      <span class="step-num-badge">33</span>
+      <span class="step-label">Service: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• AnnotationCache.get</div><div class="node-item">• AnnotationCache.getStats</div><div class="node-item">• ConsumerAnalyzer.getConsumers</div><div class="node-item">• ContextAgent.findRelevantMethods</div><div class="node-item">• ExperienceMemory.findSimilar</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-indexer.cjs</div><div class="file-item">↳ lib\annotation-manager.cjs</div><div class="file-item">↳ lib\mcp\context-agent.cjs</div><div class="file-item">↳ lib\experience-memory.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="34" style="--step-color: #d1d6f6">
+    <div class="step-header">
+      <span class="step-num-badge">34</span>
+      <span class="step-label">Service: ExperienceMemory</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• ExperienceMemory.getCurrentEvent</div><div class="node-item">• ExperienceMemory.getEvent</div><div class="node-item">• ExperienceMemory.getPatternSignature</div><div class="node-item">• ExperienceMemory.getStats</div><div class="node-item">• ExperienceMemory.updateDecision</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\experience-memory.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="35" style="--step-color: #d1d6f6">
+    <div class="step-header">
+      <span class="step-num-badge">35</span>
+      <span class="step-label">Service: Level 1 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• ExperienceMemory.updatePatterns</div><div class="node-item">• FingerprintGenerator.getPatternSignature</div><div class="node-item">• MethodIndexer.getStats</div><div class="node-item">• MethodReinjector.replaceMethodInFile</div><div class="node-item">• MethodSearch.findRelevantMethods</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\experience-memory.cjs</div><div class="file-item">↳ lib\fingerprint-generator.cjs</div><div class="file-item">↳ lib\mcp\method-indexer.cjs</div><div class="file-item">↳ lib\mcp\method-reinjector.cjs</div><div class="file-item">↳ lib\context\method-search.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="36" style="--step-color: #d1d6f6">
+    <div class="step-header">
+      <span class="step-num-badge">36</span>
+      <span class="step-label">Service: SearchSession.getAtLevel</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• SearchSession.getAtLevel</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\context\search-session.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="37" style="--step-color: #d5c2e3">
+    <div class="step-header">
+      <span class="step-num-badge">37</span>
+      <span class="step-label">Core: Level 1 (2 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• ContextAgent.buildIndex</div><div class="node-item">• RiskInferenceEngine.createWarningFromFailure</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\context-agent.cjs</div><div class="file-item">↳ lib\experience-memory.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="38" style="--step-color: #ff8a65">
+    <div class="step-header">
+      <span class="step-num-badge">38</span>
+      <span class="step-label">Entry: Level 1 (2 nodes)</span>
+    </div>
+    <div class="step-rationale">Foundational — no dependencies</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• ExperienceMemory.init</div><div class="node-item">• PreprocessAgent.init</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\experience-memory.cjs</div><div class="file-item">↳ lib\mcp\preprocess-agent.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="39" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">39</span>
+      <span class="step-label">Internal: Level 2 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Depends on 3 prior steps</div>
+    <div class="dep-list">← #4, #14, #16</div>
+    <div class="step-nodes"><div class="node-item">• AnnotationCache.save</div><div class="node-item">• AnnotationCache.set</div><div class="node-item">• AtlasGenerator.generate</div><div class="node-item">• ContextAgent.formatProjectContext</div><div class="node-item">• ExtractForClaude.run</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-indexer.cjs</div><div class="file-item">↳ lib\atlas-generator.cjs</div><div class="file-item">↳ lib\mcp\context-agent.cjs</div><div class="file-item">↳ lib\mcp\extract-for-claude.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="40" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">40</span>
+      <span class="step-label">Internal: Level 2 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Level 2 — independent from prior steps</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• ExtractForClaude.waitForUserValidation</div><div class="node-item">• FileAnalyzer.extractDependencies</div><div class="node-item">• FileAnalyzer.extractExports</div><div class="node-item">• FileAnalyzer.extractKeywords</div><div class="node-item">• FingerprintGenerator.detectDomains</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\extract-for-claude.cjs</div><div class="file-item">↳ lib\context\file-analyzer.cjs</div><div class="file-item">↳ lib\fingerprint-generator.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="41" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">41</span>
+      <span class="step-label">Internal: Level 2 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Depends on 3 prior steps</div>
+    <div class="dep-list">← #8, #14, #16</div>
+    <div class="step-nodes"><div class="node-item">• FingerprintGenerator.extractKeywords</div><div class="node-item">• FingerprintGenerator.extractRoles</div><div class="node-item">• LolveMCPServer.extractMethods</div><div class="node-item">• LolveMCPServer.handleFileChange</div><div class="node-item">• LolveMCPServer.log</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\fingerprint-generator.cjs</div><div class="file-item">↳ lib\mcp\lolvemcp.js</div></div>
+  </div>
+
+  <div class="step-card" data-id="42" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">42</span>
+      <span class="step-label">Internal: Level 2 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Level 2 — independent from prior steps</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• LolveMCPServer.setupHandlers</div><div class="node-item">• LolveMCPServer.start</div><div class="node-item">• MethodIndexer.indexAll</div><div class="node-item">• MethodIndexer.indexFile</div><div class="node-item">• MethodIndexer.saveIndex</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\lolvemcp.js</div><div class="file-item">↳ lib\mcp\method-indexer.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="43" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">43</span>
+      <span class="step-label">Internal: Level 2 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Depends on 1 prior step</div>
+    <div class="dep-list">← #13</div>
+    <div class="step-nodes"><div class="node-item">• MethodReinjector.reinject</div><div class="node-item">• MethodSearch._doSearch</div><div class="node-item">• MethodSnapshot.capture</div><div class="node-item">• PreprocessAgent.detectDomains</div><div class="node-item">• PreprocessAgent.extractKeywords</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-reinjector.cjs</div><div class="file-item">↳ lib\context\method-search.cjs</div><div class="file-item">↳ lib\mcp\method-snapshot.cjs</div><div class="file-item">↳ lib\mcp\preprocess-agent.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="44" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">44</span>
+      <span class="step-label">Internal: Level 2 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Level 2 — independent from prior steps</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• PreprocessAgent.normalizeTerms</div><div class="node-item">• SearchSession.expand</div><div class="node-item">• SourceParser.extractExports</div><div class="node-item">• TFIDFEmbedding.addDocument</div><div class="node-item">• TFIDFEmbedding.deserialize</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\preprocess-agent.cjs</div><div class="file-item">↳ lib\context\search-session.cjs</div><div class="file-item">↳ lib\annotation-manager.cjs</div><div class="file-item">↳ lib\experience-memory.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="45" style="--step-color: rgba(255,255,255,0.25)">
+    <div class="step-header">
+      <span class="step-num-badge">45</span>
+      <span class="step-label">Internal: TFIDFEmbedding.embed</span>
+    </div>
+    <div class="step-rationale">Level 2 — independent from prior steps</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• TFIDFEmbedding.embed</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\experience-memory.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="46" style="--step-color: #d5c2e3">
+    <div class="step-header">
+      <span class="step-num-badge">46</span>
+      <span class="step-label">Core: Level 2 (5 nodes)</span>
+    </div>
+    <div class="step-rationale">Depends on 1 prior step</div>
+    <div class="dep-list">← #13</div>
+    <div class="step-nodes"><div class="node-item">• AtlasGenerator.buildCalls</div><div class="node-item">• AtlasGenerator.buildMods</div><div class="node-item">• AtlasGenerator.buildRepo</div><div class="node-item">• AtlasGenerator.buildSyms</div><div class="node-item">• ConsumerAnalyzer.buildCallGraph</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\atlas-generator.cjs</div><div class="file-item">↳ lib\annotation-manager.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="47" style="--step-color: #d5c2e3">
+    <div class="step-header">
+      <span class="step-num-badge">47</span>
+      <span class="step-label">Core: Level 2 (2 nodes)</span>
+    </div>
+    <div class="step-rationale">Depends on 1 prior step</div>
+    <div class="dep-list">← #20</div>
+    <div class="step-nodes"><div class="node-item">• ContextAgent.createSearchSession</div><div class="node-item">• ExperienceMemory.createEvent</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\context-agent.cjs</div><div class="file-item">↳ lib\experience-memory.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="48" style="--step-color: #ff8a65">
+    <div class="step-header">
+      <span class="step-num-badge">48</span>
+      <span class="step-label">Entry: Level 2 (2 nodes)</span>
+    </div>
+    <div class="step-rationale">Depends on 3 prior steps</div>
+    <div class="dep-list">← #5, #15, #17</div>
+    <div class="step-nodes"><div class="node-item">• ContextAgent.init</div><div class="node-item">• ExtractForClaude.init</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\context-agent.cjs</div><div class="file-item">↳ lib\mcp\extract-for-claude.cjs</div></div>
+  </div>
+
+  <div class="step-card" data-id="49" style="--step-color: #d1d6f6">
+    <div class="step-header">
+      <span class="step-num-badge">49</span>
+      <span class="step-label">Service: Level 2 (3 nodes)</span>
+    </div>
+    <div class="step-rationale">Level 2 — independent from prior steps</div>
+    <div class="dep-list no-dep">no dependencies</div>
+    <div class="step-nodes"><div class="node-item">• MethodReinjector.findInsertionPoint</div><div class="node-item">• SearchSession.getAllLoadedCode</div><div class="node-item">• SearchSession.getAllLoadedFiles</div></div>
+    <div class="step-files"><div class="file-item">↳ lib\mcp\method-reinjector.cjs</div><div class="file-item">↳ lib\context\search-session.cjs</div></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ── Données ─────────────────────────────────────────────
+  const roadmap = {"steps":[{"id":1,"skill":"internal","label":"Internal: ASTParser","nodes":["ASTParser","ASTParser.extractClassInfo","ASTParser.extractClasses","ASTParser.extractFunctions","ASTParser.extractJSDoc"],"files":["lib\\mcp\\method-indexer.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":2,"skill":"internal","label":"Internal: ASTParser","nodes":["ASTParser.extractMethodInfo","ASTParser.extractVueScript","ASTParser.paramToString","ASTParser.parseFile","ASTParser.parseJSDoc"],"files":["lib\\mcp\\method-indexer.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":3,"skill":"internal","label":"Internal: AnnotationCache","nodes":["AnnotationCache","AnnotationCache.isUpToDate","AnnotationCache.load","AnnotationCache.mergeWithMethod","AnnotationCache.remove"],"files":["lib\\mcp\\method-indexer.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":4,"skill":"internal","label":"Internal: Atlas","nodes":["Atlas","Atlas.fromCallGraph","Atlas.fromFileIndex","Atlas.fromMethodIndex","Atlas.toJSON"],"files":["lib\\atlas.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":5,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["AtlasGenerator","AtlasGenerator.scoreNodes","AtlasGenerator.writeArtifacts","ConsumerAnalyzer","ContextAgent"],"files":["lib\\atlas-generator.cjs","lib\\annotation-manager.cjs","lib\\mcp\\context-agent.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":6,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["ContextAgent.isIndexStale","ContextAgent.searchMethods","EffectAnalyzer","EffectAnalyzer.analyzeContext","EffectAnalyzer.analyzeEffects"],"files":["lib\\mcp\\context-agent.cjs","lib\\annotation-manager.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":7,"skill":"internal","label":"Internal: ExperienceMemory","nodes":["ExperienceMemory","ExperienceMemory.addLesson","ExperienceMemory.categorizeError","ExperienceMemory.fingerprintToTerms","ExperienceMemory.markFailure"],"files":["lib\\experience-memory.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":8,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["ExperienceMemory.markSuccess","ExperienceMemory.recordModifications","ExperienceMemory.save","ExtractForClaude","ExtractForClaude.displayClaudeCodeInstructions"],"files":["lib\\experience-memory.cjs","lib\\mcp\\extract-for-claude.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":9,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["ExtractForClaude.displaySummary","ExtractForClaude.generateClaudeCodeCommand","ExtractForClaude.showHelp","ExtractForClaude.wrapText","FileAnalyzer"],"files":["lib\\mcp\\extract-for-claude.cjs","lib\\context\\file-analyzer.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":10,"skill":"internal","label":"Internal: FileAnalyzer","nodes":["FileAnalyzer.analyzeFile","FileAnalyzer.detectCategory","FileAnalyzer.extractJSDoc","FileAnalyzer.parseJSDocDescription","FileAnalyzer.parseJSDocTags"],"files":["lib\\context\\file-analyzer.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":11,"skill":"internal","label":"Internal: FingerprintGenerator","nodes":["FingerprintGenerator","FingerprintGenerator.detectEffects","FingerprintGenerator.detectErrorType","FingerprintGenerator.detectIntent","FingerprintGenerator.estimateComplexity"],"files":["lib\\fingerprint-generator.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":12,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["FingerprintGenerator.generate","FingerprintGenerator.toCanonicalString","LolveMCPServer","LolveMCPServer.clearModuleCache","LolveMCPServer.startWatching"],"files":["lib\\fingerprint-generator.cjs","lib\\mcp\\lolvemcp.js"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":13,"skill":"internal","label":"Internal: MethodIndexer","nodes":["MethodIndexer","MethodIndexer.extractMethodCode","MethodIndexer.hasFileChanged","MethodIndexer.inferRole","MethodIndexer.loadIndex"],"files":["lib\\mcp\\method-indexer.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":14,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["MethodIndexer.removeFileFromIndex","MethodIndexer.searchMethods","MethodReinjector","MethodReinjector.deleteMethodFromFile","MethodReinjector.detectChanges"],"files":["lib\\mcp\\method-indexer.cjs","lib\\mcp\\method-reinjector.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":15,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["MethodReinjector.levenshtein","MethodReinjector.parseAsJavaScript","MethodReinjector.parseModifiedFile","MethodReinjector.similarity","MethodSearch"],"files":["lib\\mcp\\method-reinjector.cjs","lib\\context\\method-search.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":16,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["MethodSearch.searchMethods","MethodSnapshot","MethodSnapshot.checkFileIntegrity","MethodSnapshot.generateTempFile","MethodSnapshot.hashFile"],"files":["lib\\context\\method-search.cjs","lib\\mcp\\method-snapshot.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":17,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["MethodSnapshot.load","MethodSnapshot.normalizeCode","MethodSnapshot.save","PreprocessAgent","PreprocessAgent.clean"],"files":["lib\\mcp\\method-snapshot.cjs","lib\\mcp\\preprocess-agent.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":18,"skill":"internal","label":"Internal: PreprocessAgent","nodes":["PreprocessAgent.detectIntent","PreprocessAgent.enrich","PreprocessAgent.estimateComplexity","PreprocessAgent.estimateTokens","PreprocessAgent.extractDomainTerms"],"files":["lib\\mcp\\preprocess-agent.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":19,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["PreprocessAgent.generateSystemPrompt","PreprocessAgent.process","RiskInferenceEngine","RiskInferenceEngine.analyzePatternRisk","RiskInferenceEngine.analyzeRisks"],"files":["lib\\mcp\\preprocess-agent.cjs","lib\\experience-memory.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":20,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["RiskInferenceEngine.calculateOverallRisk","RiskInferenceEngine.detectSpecificRisks","RiskInferenceEngine.formatRiskReport","SearchSession","SearchSession._addHistory"],"files":["lib\\experience-memory.cjs","lib\\context\\search-session.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":21,"skill":"internal","label":"Internal: SearchSession","nodes":["SearchSession._findCreatorMethods","SearchSession._findMethodsOfClass","SearchSession._search","SearchSession.applyAnnotations","SearchSession.checkAnnotations"],"files":["lib\\context\\search-session.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":22,"skill":"internal","label":"Internal: SearchSession","nodes":["SearchSession.count","SearchSession.exclude","SearchSession.history","SearchSession.keys","SearchSession.loadCode"],"files":["lib\\context\\search-session.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":23,"skill":"internal","label":"Internal: SearchSession","nodes":["SearchSession.loadFile","SearchSession.resetExclusions","SearchSession.results","SearchSession.retry","SearchSession.summary"],"files":["lib\\context\\search-session.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":24,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["SearchSession.toContext","SearchSession.toPrompt","SourceParser","SourceParser.extractArrowBody","SourceParser.extractBracedBlock"],"files":["lib\\context\\search-session.cjs","lib\\annotation-manager.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":25,"skill":"internal","label":"Internal: SourceParser","nodes":["SourceParser.extractClasses","SourceParser.extractImports","SourceParser.extractMethods","SourceParser.extractStandaloneFunctions","SourceParser.parseFile"],"files":["lib\\annotation-manager.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":26,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["SourceParser.parseJSDoc","SuggestionGenerator","SuggestionGenerator.calculateConfidence","SuggestionGenerator.generateAll","SuggestionGenerator.generateForFile"],"files":["lib\\annotation-manager.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":27,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["SuggestionGenerator.suggestClassRole","SuggestionGenerator.suggestMethodRole","TFIDFEmbedding","TFIDFEmbedding.cosineSimilarity","TFIDFEmbedding.serialize"],"files":["lib\\annotation-manager.cjs","lib\\experience-memory.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":28,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["buildCallGraph","compressedFormatter","deepMerge","dependencyFormatter","detectSourcePath"],"files":["lib\\call-graph.cjs","lib\\atlas-formatter.cjs","lib\\utils\\config-loader.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":29,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["extractCode","extractEdges","extractOnly","findLeadingCommentsStart","generateDiagram"],"files":["lib\\mcp\\method-indexer.cjs","lib\\call-graph.cjs","lib\\mcp\\extract-cli.js","lib\\project-diagram.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":30,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["getFileStats","hashContent","list","loadAnnotCache","loadModuleConfig"],"files":["lib\\mcp\\method-indexer.cjs","lib\\utils\\logger.cjs","lib\\project-diagram.cjs","lib\\utils\\config-loader.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":31,"skill":"internal","label":"Internal: Level 1 (5 nodes)","nodes":["loadProjectConfig","log","main","parseContent","repoMapFormatter"],"files":["lib\\utils\\config-loader.cjs","lib\\setup-claude-hooks.cjs","lib\\atlas-generator.cjs","lib\\atlas-formatter.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":32,"skill":"internal","label":"Internal: Level 1 (3 nodes)","nodes":["runFull","section","walk"],"files":["lib\\annotation-manager.cjs","lib\\utils\\logger.cjs","lib\\atlas-generator.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":33,"skill":"api","label":"Service: Level 1 (5 nodes)","nodes":["AnnotationCache.get","AnnotationCache.getStats","ConsumerAnalyzer.getConsumers","ContextAgent.findRelevantMethods","ExperienceMemory.findSimilar"],"files":["lib\\mcp\\method-indexer.cjs","lib\\annotation-manager.cjs","lib\\mcp\\context-agent.cjs","lib\\experience-memory.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":34,"skill":"api","label":"Service: ExperienceMemory","nodes":["ExperienceMemory.getCurrentEvent","ExperienceMemory.getEvent","ExperienceMemory.getPatternSignature","ExperienceMemory.getStats","ExperienceMemory.updateDecision"],"files":["lib\\experience-memory.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":35,"skill":"api","label":"Service: Level 1 (5 nodes)","nodes":["ExperienceMemory.updatePatterns","FingerprintGenerator.getPatternSignature","MethodIndexer.getStats","MethodReinjector.replaceMethodInFile","MethodSearch.findRelevantMethods"],"files":["lib\\experience-memory.cjs","lib\\fingerprint-generator.cjs","lib\\mcp\\method-indexer.cjs","lib\\mcp\\method-reinjector.cjs","lib\\context\\method-search.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":36,"skill":"api","label":"Service: SearchSession.getAtLevel","nodes":["SearchSession.getAtLevel"],"files":["lib\\context\\search-session.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":37,"skill":"domain","label":"Core: Level 1 (2 nodes)","nodes":["ContextAgent.buildIndex","RiskInferenceEngine.createWarningFromFailure"],"files":["lib\\mcp\\context-agent.cjs","lib\\experience-memory.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":38,"skill":"entrypoint","label":"Entry: Level 1 (2 nodes)","nodes":["ExperienceMemory.init","PreprocessAgent.init"],"files":["lib\\experience-memory.cjs","lib\\mcp\\preprocess-agent.cjs"],"rationale":"Foundational — no dependencies","dependsOnSteps":[]},{"id":39,"skill":"internal","label":"Internal: Level 2 (5 nodes)","nodes":["AnnotationCache.save","AnnotationCache.set","AtlasGenerator.generate","ContextAgent.formatProjectContext","ExtractForClaude.run"],"files":["lib\\mcp\\method-indexer.cjs","lib\\atlas-generator.cjs","lib\\mcp\\context-agent.cjs","lib\\mcp\\extract-for-claude.cjs"],"rationale":"Depends on 3 prior steps","dependsOnSteps":[4,14,16]},{"id":40,"skill":"internal","label":"Internal: Level 2 (5 nodes)","nodes":["ExtractForClaude.waitForUserValidation","FileAnalyzer.extractDependencies","FileAnalyzer.extractExports","FileAnalyzer.extractKeywords","FingerprintGenerator.detectDomains"],"files":["lib\\mcp\\extract-for-claude.cjs","lib\\context\\file-analyzer.cjs","lib\\fingerprint-generator.cjs"],"rationale":"Level 2 — independent from prior steps","dependsOnSteps":[]},{"id":41,"skill":"internal","label":"Internal: Level 2 (5 nodes)","nodes":["FingerprintGenerator.extractKeywords","FingerprintGenerator.extractRoles","LolveMCPServer.extractMethods","LolveMCPServer.handleFileChange","LolveMCPServer.log"],"files":["lib\\fingerprint-generator.cjs","lib\\mcp\\lolvemcp.js"],"rationale":"Depends on 3 prior steps","dependsOnSteps":[8,14,16]},{"id":42,"skill":"internal","label":"Internal: Level 2 (5 nodes)","nodes":["LolveMCPServer.setupHandlers","LolveMCPServer.start","MethodIndexer.indexAll","MethodIndexer.indexFile","MethodIndexer.saveIndex"],"files":["lib\\mcp\\lolvemcp.js","lib\\mcp\\method-indexer.cjs"],"rationale":"Level 2 — independent from prior steps","dependsOnSteps":[]},{"id":43,"skill":"internal","label":"Internal: Level 2 (5 nodes)","nodes":["MethodReinjector.reinject","MethodSearch._doSearch","MethodSnapshot.capture","PreprocessAgent.detectDomains","PreprocessAgent.extractKeywords"],"files":["lib\\mcp\\method-reinjector.cjs","lib\\context\\method-search.cjs","lib\\mcp\\method-snapshot.cjs","lib\\mcp\\preprocess-agent.cjs"],"rationale":"Depends on 1 prior step","dependsOnSteps":[13]},{"id":44,"skill":"internal","label":"Internal: Level 2 (5 nodes)","nodes":["PreprocessAgent.normalizeTerms","SearchSession.expand","SourceParser.extractExports","TFIDFEmbedding.addDocument","TFIDFEmbedding.deserialize"],"files":["lib\\mcp\\preprocess-agent.cjs","lib\\context\\search-session.cjs","lib\\annotation-manager.cjs","lib\\experience-memory.cjs"],"rationale":"Level 2 — independent from prior steps","dependsOnSteps":[]},{"id":45,"skill":"internal","label":"Internal: TFIDFEmbedding.embed","nodes":["TFIDFEmbedding.embed"],"files":["lib\\experience-memory.cjs"],"rationale":"Level 2 — independent from prior steps","dependsOnSteps":[]},{"id":46,"skill":"domain","label":"Core: Level 2 (5 nodes)","nodes":["AtlasGenerator.buildCalls","AtlasGenerator.buildMods","AtlasGenerator.buildRepo","AtlasGenerator.buildSyms","ConsumerAnalyzer.buildCallGraph"],"files":["lib\\atlas-generator.cjs","lib\\annotation-manager.cjs"],"rationale":"Depends on 1 prior step","dependsOnSteps":[13]},{"id":47,"skill":"domain","label":"Core: Level 2 (2 nodes)","nodes":["ContextAgent.createSearchSession","ExperienceMemory.createEvent"],"files":["lib\\mcp\\context-agent.cjs","lib\\experience-memory.cjs"],"rationale":"Depends on 1 prior step","dependsOnSteps":[20]},{"id":48,"skill":"entrypoint","label":"Entry: Level 2 (2 nodes)","nodes":["ContextAgent.init","ExtractForClaude.init"],"files":["lib\\mcp\\context-agent.cjs","lib\\mcp\\extract-for-claude.cjs"],"rationale":"Depends on 3 prior steps","dependsOnSteps":[5,15,17]},{"id":49,"skill":"api","label":"Service: Level 2 (3 nodes)","nodes":["MethodReinjector.findInsertionPoint","SearchSession.getAllLoadedCode","SearchSession.getAllLoadedFiles"],"files":["lib\\mcp\\method-reinjector.cjs","lib\\context\\search-session.cjs"],"rationale":"Level 2 — independent from prior steps","dependsOnSteps":[]}]};
+
+  // ── Pan / Zoom ─────────────────────────────────────────
+  const svg   = document.getElementById('graph-svg');
+  const group = document.getElementById('zoom-group');
+  let scale = 0.85, tx = 40, ty = 20;
+  let dragging = false, lastX = 0, lastY = 0;
+
+  function applyTransform() {
+    group.setAttribute('transform', `translate(${tx},${ty}) scale(${scale})`);
+  }
+  applyTransform();
+
+  svg.addEventListener('wheel', e => {
+    e.preventDefault();
+    const delta = -e.deltaY / 600;
+    const rect  = svg.getBoundingClientRect();
+    const mx    = e.clientX - rect.left;
+    const my    = e.clientY - rect.top;
+    const newScale = Math.max(0.2, Math.min(3, scale + delta));
+    tx = mx - (mx - tx) * (newScale / scale);
+    ty = my - (my - ty) * (newScale / scale);
+    scale = newScale;
+    applyTransform();
+  }, { passive: false });
+
+  svg.addEventListener('mousedown', e => {
+    if (e.target.closest('.vertex')) return;
+    dragging = true; lastX = e.clientX; lastY = e.clientY;
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    tx += e.clientX - lastX; ty += e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    applyTransform();
+  });
+  window.addEventListener('mouseup', () => { dragging = false; });
+
+  // ── Interaction vertex / sidebar ───────────────────────
+  let activeId = null;
+
+  function activate(id) {
+    if (activeId === id) { deactivate(); return; }
+    deactivate();
+    activeId = id;
+
+    const step = roadmap.steps.find(s => s.id === id);
+    if (!step) return;
+
+    // Highlight vertex
+    document.querySelectorAll(`.vertex[data-id="${id}"]`).forEach(el => el.classList.add('active'));
+
+    // Highlight orb-lines
+    const related = new Set([id, ...step.dependsOnSteps]);
+    const dependents = roadmap.steps.filter(s => s.dependsOnSteps.includes(id)).map(s => s.id);
+    dependents.forEach(d => related.add(d));
+
+    document.querySelectorAll('.orb-line').forEach(el => {
+      const from = Number(el.dataset.from);
+      const to   = Number(el.dataset.to);
+      if (related.has(from) && related.has(to)) {
+        el.classList.add('highlight');
+      } else {
+        el.classList.add('dim');
+      }
+    });
+
+    // Highlight connected vertices
+    related.forEach(rid => {
+      document.querySelectorAll(`.vertex[data-id="${rid}"]`).forEach(el => el.classList.add('active'));
+    });
+
+    // Sidebar
+    document.querySelectorAll('.step-card').forEach(el => {
+      el.classList.toggle('active', Number(el.dataset.id) === id);
+    });
+    const card = document.querySelector(`.step-card[data-id="${id}"]`);
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function deactivate() {
+    activeId = null;
+    document.querySelectorAll('.vertex.active').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.orb-line').forEach(el => {
+      el.classList.remove('highlight', 'dim');
+    });
+    document.querySelectorAll('.step-card.active').forEach(el => el.classList.remove('active'));
+  }
+
+  // Click sur vertex SVG
+  document.querySelectorAll('.vertex').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      activate(Number(el.dataset.id));
+    });
+  });
+
+  // Click sur sidebar card
+  document.querySelectorAll('.step-card').forEach(el => {
+    el.addEventListener('click', () => activate(Number(el.dataset.id)));
+  });
+
+  // Click sur fond → deselect
+  svg.addEventListener('click', e => {
+    if (!e.target.closest('.vertex')) deactivate();
+  });
+
+  // ── Fit to viewport ────────────────────────────────────
+  const bbox = group.getBBox();
+  if (bbox.width && bbox.height) {
+    const vw = svg.clientWidth, vh = svg.clientHeight;
+    const margin = 40;
+    const s = Math.min(
+      (vw - margin * 2) / bbox.width,
+      (vh - margin * 2) / bbox.height,
+      1
+    );
+    scale = s * 0.9;
+    tx = (vw - bbox.width  * scale) / 2 - bbox.x * scale;
+    ty = (vh - bbox.height * scale) / 2 - bbox.y * scale;
+    applyTransform();
+  }
+})();
+</script>
+</body>
+</html>

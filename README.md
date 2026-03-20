@@ -48,6 +48,31 @@ lolve-cartography annotate stats     # View statistics
 lolve-cartography annotate full --force
 ```
 
+## Atlas — AI-friendly artifacts
+
+Generate structured markdown artifacts for LLMs and AI tools:
+
+```bash
+# Generate all artifacts (repo-map.md, atlas.compressed.md, atlas.dependencies.md)
+lolve-cartography atlas
+
+# Without JSON files (atlas.symbols.json, atlas.graph.json)
+lolve-cartography atlas --no-json
+
+# On an external project
+lolve-cartography --project /path/to/myproject atlas
+```
+
+Output files in `/ai/` inside the analyzed project:
+
+| File | Content |
+|------|---------|
+| `repo-map.md` | Indented file tree (no prose) |
+| `atlas.compressed.md` | ≤50 lines: SYSTEM / MODULES / API / FLOW |
+| `atlas.dependencies.md` | Call graph with scores + module deps |
+| `atlas.symbols.json` | Dump of all indexed symbols |
+| `atlas.graph.json` | Dump of call graph and module deps |
+
 ## Architecture Overview
 
 lolve-cartography uses a **multi-agent architecture** to analyze codebases and manage annotations intelligently. Each agent has a specific responsibility and collaborates with others through an orchestrator.
